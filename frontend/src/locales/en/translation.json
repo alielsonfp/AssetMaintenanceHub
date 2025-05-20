@@ -1,0 +1,90 @@
+{
+  "app": {
+    "title": "Asset Maintenance Assistant",
+    "theme": {
+      "light": "Light Theme",
+      "dark": "Dark Theme"
+    },
+    "language": {
+      "pt": "Portuguese",
+      "en": "English",
+      "es": "Spanish"
+    }
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "name": "Name",
+    "forgotPassword": "Forgot Password?",
+    "resetPassword": "Reset Password",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?"
+  },
+  "dashboard": {
+    "title": "Main Dashboard",
+    "upcomingMaintenance": "Upcoming Maintenance",
+    "overdueMaintenance": "Overdue Maintenance",
+    "assetCount": "Total Assets",
+    "maintenanceCount": "Total Maintenances"
+  },
+  "assets": {
+    "title": "My Assets",
+    "add": "Add Asset",
+    "edit": "Edit Asset",
+    "delete": "Remove Asset",
+    "name": "Name",
+    "description": "Description",
+    "location": "Location",
+    "status": {
+      "title": "Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "maintenance": "Under Maintenance"
+    },
+    "noAssets": "No assets registered"
+  },
+  "maintenance": {
+    "title": "Maintenance",
+    "add": "Log Maintenance",
+    "edit": "Edit Maintenance",
+    "delete": "Remove Maintenance",
+    "type": "Maintenance Type",
+    "date": "Date",
+    "notes": "Notes",
+    "cost": "Cost",
+    "nextDate": "Next Due Date",
+    "frequency": {
+      "title": "Frequency",
+      "days": "Days",
+      "weeks": "Weeks",
+      "months": "Months",
+      "kilometers": "Kilometers",
+      "hours": "Usage Hours"
+    },
+    "status": {
+      "title": "Status",
+      "pending": "Pending",
+      "completed": "Completed",
+      "overdue": "Overdue"
+    },
+    "noRecords": "No maintenance records"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "confirm": "Confirm",
+    "back": "Back",
+    "search": "Search",
+    "loading": "Loading...",
+    "success": "Success!",
+    "error": "Error!",
+    "required": "Required field"
+  }
+}

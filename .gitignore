@@ -1,0 +1,33 @@
+# .gitignore na raiz do projeto (maintenance-system/.gitignore)
+
+# Dependências
+**/node_modules/
+
+# Builds
+**/dist/
+**/build/
+
+# Variáveis de ambiente
+**/.env
+**/.env.local
+**/docker-compose.override.yml
+
+# Logs
+*.log
+logs/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# IDEs/Editores
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Docker temporários
+**/docker-data/

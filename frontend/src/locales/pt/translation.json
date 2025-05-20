@@ -1,0 +1,90 @@
+{
+  "app": {
+    "title": "Assistente de Manutenção de Ativos",
+    "theme": {
+      "light": "Tema Claro",
+      "dark": "Tema Escuro"
+    },
+    "language": {
+      "pt": "Português",
+      "en": "Inglês",
+      "es": "Espanhol"
+    }
+  },
+  "auth": {
+    "login": "Entrar",
+    "register": "Cadastrar",
+    "logout": "Sair",
+    "email": "E-mail",
+    "password": "Senha",
+    "confirmPassword": "Confirmar Senha",
+    "name": "Nome",
+    "forgotPassword": "Esqueceu a senha?",
+    "resetPassword": "Recuperar Senha",
+    "noAccount": "Não tem uma conta?",
+    "hasAccount": "Já tem uma conta?"
+  },
+  "dashboard": {
+    "title": "Painel Principal",
+    "upcomingMaintenance": "Manutenções Próximas",
+    "overdueMaintenace": "Manutenções Atrasadas",
+    "assetCount": "Total de Ativos",
+    "maintenanceCount": "Total de Manutenções"
+  },
+  "assets": {
+    "title": "Meus Ativos",
+    "add": "Adicionar Ativo",
+    "edit": "Editar Ativo",
+    "delete": "Remover Ativo",
+    "name": "Nome",
+    "description": "Descrição",
+    "location": "Localização",
+    "status": {
+      "title": "Status",
+      "active": "Ativo",
+      "inactive": "Inativo",
+      "maintenance": "Em Manutenção"
+    },
+    "noAssets": "Nenhum ativo cadastrado"
+  },
+  "maintenance": {
+    "title": "Manutenções",
+    "add": "Registrar Manutenção",
+    "edit": "Editar Manutenção",
+    "delete": "Remover Manutenção",
+    "type": "Tipo de Manutenção",
+    "date": "Data",
+    "notes": "Observações",
+    "cost": "Custo",
+    "nextDate": "Próxima Data",
+    "frequency": {
+      "title": "Frequência",
+      "days": "Dias",
+      "weeks": "Semanas",
+      "months": "Meses",
+      "kilometers": "Quilômetros",
+      "hours": "Horas de Uso"
+    },
+    "status": {
+      "title": "Status",
+      "pending": "Pendente",
+      "completed": "Concluída",
+      "overdue": "Atrasada"
+    },
+    "noRecords": "Nenhuma manutenção registrada"
+  },
+  "common": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "view": "Visualizar",
+    "confirm": "Confirmar",
+    "back": "Voltar",
+    "search": "Buscar",
+    "loading": "Carregando...",
+    "success": "Sucesso!",
+    "error": "Erro!",
+    "required": "Campo obrigatório"
+  }
+}
