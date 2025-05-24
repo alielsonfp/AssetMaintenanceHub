@@ -1,0 +1,2627 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+4. Repository files, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+<additional_info>
+
+</additional_info>
+
+</file_summary>
+
+<directory_structure>
+.gitignore
+backend/Dockerfile
+backend/package.json
+backend/repomix-output.xml
+backend/src/config/database.sql
+backend/src/config/db.ts
+backend/src/config/setupDatabase.ts
+backend/src/controllers/authController.ts
+backend/src/controllers/passwordController.ts
+backend/src/index.ts
+backend/src/middlewares/authMiddleware.ts
+backend/src/models/userModel.ts
+backend/src/routes/authRoutes.ts
+backend/src/services/emailService.ts
+backend/tsconfig.json
+docker-compose.yml
+frontend/.gitignore
+frontend/Dockerfile
+frontend/eslint.config.js
+frontend/index.html
+frontend/package.json
+frontend/public/vite.svg
+frontend/README.md
+frontend/src/App.css
+frontend/src/App.tsx
+frontend/src/assets/react.svg
+frontend/src/components/layout/ProtectedLayout.tsx
+frontend/src/context/AppContext.tsx
+frontend/src/index.css
+frontend/src/locales/en/translation.json
+frontend/src/locales/es/translation.json
+frontend/src/locales/i18n.ts
+frontend/src/locales/pt/translation.json
+frontend/src/main.tsx
+frontend/src/theme/index.ts
+frontend/src/vite-env.d.ts
+frontend/tsconfig.app.json
+frontend/tsconfig.json
+frontend/tsconfig.node.json
+frontend/vite.config.ts
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="backend/repomix-output.xml">
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+4. Repository files, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+<additional_info>
+
+</additional_info>
+
+</file_summary>
+
+<directory_structure>
+Dockerfile
+package.json
+src/config/database.sql
+src/config/db.ts
+src/controllers/authController.ts
+src/controllers/passwordController.ts
+src/index.ts
+src/middlewares/authMiddleware.ts
+src/models/userModel.ts
+src/routes/authRoutes.ts
+src/services/emailService.ts
+tsconfig.json
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="Dockerfile">
+FROM node:16-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+RUN npm run build
+
+EXPOSE 3001
+
+CMD ["npm", "start"]
+</file>
+
+<file path="package.json">
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "nodemon src/index.ts",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@types/express": "^4.17.21",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^7.0.3",
+    "pg": "^8.16.0"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/cors": "^2.8.18",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/nodemailer": "^6.4.17",
+    "@types/pg": "^8.15.2",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
+</file>
+
+<file path="src/config/database.sql">
+-- Tabelas necessárias para o sistema de manutenção de ativos
+
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE assets (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    location VARCHAR(100),
+    status VARCHAR(20) DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE maintenance_types (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    is_default BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE maintenance_records (
+    id SERIAL PRIMARY KEY,
+    asset_id INTEGER REFERENCES assets(id) ON DELETE CASCADE,
+    maintenance_type_id INTEGER REFERENCES maintenance_types(id) ON DELETE SET NULL,
+    date_performed DATE NOT NULL,
+    notes TEXT,
+    cost DECIMAL(10,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE maintenance_schedules (
+    id SERIAL PRIMARY KEY,
+    asset_id INTEGER REFERENCES assets(id) ON DELETE CASCADE,
+    maintenance_type_id INTEGER REFERENCES maintenance_types(id) ON DELETE SET NULL,
+    based_on_record_id INTEGER REFERENCES maintenance_records(id) ON DELETE SET NULL,
+    scheduled_date DATE NOT NULL,
+    status VARCHAR(20) DEFAULT 'pending',
+    frequency_type VARCHAR(20) NOT NULL,
+    frequency_value INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE password_reset_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    token VARCHAR(100) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Índices para melhorar performance
+CREATE INDEX idx_assets_user_id ON assets(user_id);
+CREATE INDEX idx_maintenance_records_asset_id ON maintenance_records(asset_id);
+CREATE INDEX idx_maintenance_schedules_asset_id ON maintenance_schedules(asset_id);
+CREATE INDEX idx_maintenance_schedules_status ON maintenance_schedules(status);
+</file>
+
+<file path="src/config/db.ts">
+import { Pool } from 'pg';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const pool = new Pool({
+  user: process.env.DB_USER || 'postgres',
+  host: process.env.DB_HOST || 'localhost',
+  database: process.env.DB_NAME || 'maintenance_system',
+  password: process.env.DB_PASSWORD || 'postgres',
+  port: parseInt(process.env.DB_PORT || '5432'),
+});
+
+export default {
+  query: (text: string, params?: any[]) => pool.query(text, params),
+  getClient: () => pool.connect(),
+};
+</file>
+
+<file path="src/controllers/authController.ts">
+import { Request, Response } from 'express';
+import * as jwt from 'jsonwebtoken';
+import userModel from '../models/userModel';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+// Tipagem correta para o payload
+interface JwtPayload {
+  id: number;
+  name: string;
+  email: string;
+}
+
+// Função para gerar token JWT
+function generateToken(payload: JwtPayload): string {
+  const secret = process.env.JWT_SECRET || 'default_secret';
+  return jwt.sign(payload, secret, {
+    expiresIn: process.env.JWT_EXPIRES_IN || '1d',
+  } as jwt.SignOptions);
+}
+
+const authController = {
+  async register(req: Request, res: Response): Promise<Response> {
+    try {
+      const { name, email, password } = req.body;
+
+      if (!name || !email || !password) {
+        return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
+      }
+
+      // Verificar se o email já está em uso
+      const existingUser = await userModel.findByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: 'Email já está em uso' });
+      }
+
+      // Criar o usuário
+      const user = await userModel.create({ name, email, password });
+
+      // Remover o password antes de retornar
+      const userWithoutPassword = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        created_at: user.created_at,
+        updated_at: user.updated_at
+      };
+
+      return res.status(201).json({
+        user: userWithoutPassword,
+        token: generateToken({ id: user.id, name: user.name, email: user.email }),
+      });
+    } catch (error) {
+      console.error('Erro ao registrar usuário:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async login(req: Request, res: Response): Promise<Response> {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ message: 'Email e senha são obrigatórios' });
+      }
+
+      // Buscar usuário pelo email
+      const user = await userModel.findByEmail(email);
+      if (!user) {
+        return res.status(401).json({ message: 'Credenciais inválidas' });
+      }
+
+      // Verificar senha
+      const passwordMatch = await userModel.validatePassword(password, user.password_hash);
+      if (!passwordMatch) {
+        return res.status(401).json({ message: 'Credenciais inválidas' });
+      }
+
+      return res.json({
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        },
+        token: generateToken({ id: user.id, name: user.name, email: user.email }),
+      });
+    } catch (error) {
+      console.error('Erro ao fazer login:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async getProfile(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      const user = await userModel.findById(userId);
+
+      if (!user) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+
+      return res.json({ user });
+    } catch (error) {
+      console.error('Erro ao obter perfil:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+};
+
+export default authController;
+</file>
+
+<file path="src/controllers/passwordController.ts">
+import { Request, Response } from 'express';
+import crypto from 'crypto';
+import userModel from '../models/userModel';
+import db from '../config/db';
+import { sendEmail } from '../services/emailService';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const passwordController = {
+  async forgotPassword(req: Request, res: Response): Promise<Response> {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({ message: 'Email é obrigatório' });
+      }
+
+      const user = await userModel.findByEmail(email);
+      if (!user) {
+        // Por segurança, não informamos se o email existe ou não
+        return res.status(200).json({ message: 'Se um usuário com esse email existir, enviaremos instruções de recuperação' });
+      }
+
+      // Gerar token
+      const token = crypto.randomBytes(20).toString('hex');
+      const now = new Date();
+      const expireDate = new Date(now);
+      expireDate.setHours(now.getHours() + 1); // Expira em 1 hora
+
+      // Salvar o token no banco
+      await db.query(
+        'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)',
+        [user.id, token, expireDate]
+      );
+
+      // Enviar email com o token
+      const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password/${token}`;
+
+      await sendEmail({
+        to: email,
+        subject: 'Recuperação de senha',
+        text: `Você solicitou a recuperação de senha. Use o link a seguir para definir uma nova senha: ${resetUrl}`,
+        html: `
+          <p>Você solicitou a recuperação de senha.</p>
+          <p>Use o link a seguir para definir uma nova senha:</p>
+          <a href="${resetUrl}">${resetUrl}</a>
+          <p>Se você não solicitou isso, ignore este email.</p>
+        `
+      });
+
+      return res.status(200).json({ message: 'Email de recuperação enviado' });
+    } catch (error) {
+      console.error('Erro ao solicitar recuperação de senha:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async resetPassword(req: Request, res: Response): Promise<Response> {
+    try {
+      const { token, password } = req.body;
+
+      if (!token || !password) {
+        return res.status(400).json({ message: 'Token e nova senha são obrigatórios' });
+      }
+
+      // Verificar se o token existe e está válido
+      const result = await db.query(
+        'SELECT * FROM password_reset_tokens WHERE token = $1 AND expires_at > CURRENT_TIMESTAMP',
+        [token]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(400).json({ message: 'Token inválido ou expirado' });
+      }
+
+      const resetToken = result.rows[0];
+      const userId = resetToken.user_id;
+
+      // Atualizar a senha
+      await userModel.updatePasswordHash(userId, password);
+
+      // Invalidar o token usado
+      await db.query('DELETE FROM password_reset_tokens WHERE id = $1', [resetToken.id]);
+
+      return res.status(200).json({ message: 'Senha atualizada com sucesso' });
+    } catch (error) {
+      console.error('Erro ao redefinir senha:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  }
+};
+
+export default passwordController;
+</file>
+
+<file path="src/index.ts">
+// backend/src/index.ts
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import authRoutes from './routes/authRoutes';
+
+dotenv.config();
+
+const app = express();
+const port = process.env.PORT || 3001;
+
+// Middlewares
+app.use(cors());
+app.use(express.json());
+
+// Rotas
+app.use('/api/auth', authRoutes);
+
+// Rota de teste
+app.get('/', (req, res) => {
+  res.json({ message: 'API do Sistema de Manutenção de Ativos' });
+});
+
+// Iniciar servidor
+app.listen(port, () => {
+  console.log(`Servidor rodando na porta ${port}`);
+});
+</file>
+
+<file path="src/middlewares/authMiddleware.ts">
+import { Request, Response, NextFunction } from 'express';
+import * as jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+interface TokenPayload {
+  id: number;
+  name: string;
+  email: string;
+}
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: TokenPayload;
+    }
+  }
+}
+
+export default function authMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void | Response {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({ message: 'Token não fornecido' });
+  }
+
+  const parts = authHeader.split(' ');
+
+  if (parts.length !== 2) {
+    return res.status(401).json({ message: 'Token com formato inválido' });
+  }
+
+  const [scheme, token] = parts;
+
+  if (!/^Bearer$/i.test(scheme)) {
+    return res.status(401).json({ message: 'Token mal formatado' });
+  }
+
+  try {
+    // Usando a tipagem correta para o secret
+    const secret: jwt.Secret = process.env.JWT_SECRET || 'default_secret';
+    const decoded = jwt.verify(token, secret) as TokenPayload;
+
+    req.user = decoded;
+
+    next();
+  } catch (err) {
+    return res.status(401).json({ message: 'Token inválido' });
+  }
+}
+</file>
+
+<file path="src/models/userModel.ts">
+// backend/src/models/userModel.ts
+import db from '../config/db';
+import bcrypt from 'bcrypt';
+
+interface User {
+  id?: number;
+  name: string;
+  email: string;
+  password?: string;
+  password_hash?: string;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
+const userModel = {
+  async findByEmail(email: string) {
+    const result = await db.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email]
+    );
+    return result.rows[0];
+  },
+
+  async findById(id: number) {
+    const result = await db.query(
+      'SELECT id, name, email, created_at, updated_at FROM users WHERE id = $1',
+      [id]
+    );
+    return result.rows[0];
+  },
+
+  async create(user: User) {
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(user.password!, salt);
+
+    const result = await db.query(
+      'INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, name, email, created_at, updated_at',
+      [user.name, user.email, password_hash]
+    );
+
+    return result.rows[0];
+  },
+
+  async validatePassword(plainPassword: string, hashedPassword: string) {
+    return await bcrypt.compare(plainPassword, hashedPassword);
+  },
+
+  async updatePasswordHash(userId: number, newPassword: string) {
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(newPassword, salt);
+
+    const result = await db.query(
+      'UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id',
+      [password_hash, userId]
+    );
+
+    return result.rows[0];
+  }
+};
+
+export default userModel;
+</file>
+
+<file path="src/routes/authRoutes.ts">
+// backend/src/routes/authRoutes.ts
+import { Router } from 'express';
+import authController from '../controllers/authController';
+import passwordController from '../controllers/passwordController';
+import authMiddleware from '../middlewares/authMiddleware';
+
+const router = Router();
+
+// Rotas públicas
+router.post('/register', (req, res) => authController.register(req, res));
+router.post('/login', (req, res) => authController.login(req, res));
+router.post('/forgot-password', (req, res) => passwordController.forgotPassword(req, res));
+router.post('/reset-password', (req, res) => passwordController.resetPassword(req, res));
+
+// Rotas protegidas
+router.get('/profile', authMiddleware, (req, res) => authController.getProfile(req, res));
+
+export default router;
+</file>
+
+<file path="src/services/emailService.ts">
+// backend/src/services/emailService.ts
+import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+interface EmailOptions {
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+}
+
+export async function sendEmail(options: EmailOptions) {
+  // Criar transportador
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: false, // true para 465, false para outras portas
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+
+  // Enviar email
+  const info = await transporter.sendMail({
+    from: `"Sistema de Manutenção" <${process.env.SMTP_USER}>`,
+    to: options.to,
+    subject: options.subject,
+    text: options.text,
+    html: options.html,
+  });
+
+  console.log('Email enviado: %s', info.messageId);
+
+  return info;
+}
+</file>
+
+<file path="tsconfig.json">
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.test.ts"
+  ]
+}
+</file>
+
+</files>
+</file>
+
+<file path="backend/src/config/setupDatabase.ts">
+import { Pool } from 'pg';
+import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+
+dotenv.config();
+
+async function setupDatabase() {
+  // Aguardar um pouco para garantir que o PostgreSQL está pronto
+  console.log('Aguardando PostgreSQL inicializar...');
+  await new Promise(resolve => setTimeout(resolve, 3000));
+
+  // Criar um novo pool específico para a configuração
+  const pool = new Pool({
+    user: process.env.DB_USER || 'postgres',
+    host: process.env.DB_HOST || 'localhost',
+    database: process.env.DB_NAME || 'maintenance_system',
+    password: process.env.DB_PASSWORD || 'postgres',
+    port: parseInt(process.env.DB_PORT || '5432'),
+  });
+
+  try {
+    // Testar conexão primeiro
+    await pool.query('SELECT NOW()');
+    console.log('Conexão com PostgreSQL estabelecida!');
+
+    // Ler o arquivo SQL
+    const sql = fs.readFileSync(
+      path.join(__dirname, 'database.sql'),
+      'utf8'
+    );
+
+    // Executar o script SQL
+    await pool.query(sql);
+    console.log('Banco de dados inicializado com sucesso!');
+  } catch (error) {
+    console.error('Erro ao inicializar o banco de dados:', error);
+    process.exit(1);
+  } finally {
+    // Fechar a conexão
+    await pool.end();
+  }
+}
+
+// Executar a função
+setupDatabase();
+</file>
+
+<file path="backend/src/controllers/authController.ts">
+import { Request, Response } from 'express';
+import * as jwt from 'jsonwebtoken';
+import userModel from '../models/userModel';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+// Tipagem correta para o payload
+interface JwtPayload {
+  id: number;
+  name: string;
+  email: string;
+}
+
+// Função para gerar token JWT
+function generateToken(payload: JwtPayload): string {
+  const secret = process.env.JWT_SECRET || 'default_secret';
+  return jwt.sign(payload, secret, {
+    expiresIn: process.env.JWT_EXPIRES_IN || '1d',
+  } as jwt.SignOptions);
+}
+
+const authController = {
+  async register(req: Request, res: Response): Promise<Response> {
+    try {
+      const { name, email, password } = req.body;
+
+      if (!name || !email || !password) {
+        return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
+      }
+
+      // Verificar se o email já está em uso
+      const existingUser = await userModel.findByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: 'Email já está em uso' });
+      }
+
+      // Criar o usuário
+      const user = await userModel.create({ name, email, password });
+
+      // Remover o password antes de retornar
+      const userWithoutPassword = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        created_at: user.created_at,
+        updated_at: user.updated_at
+      };
+
+      return res.status(201).json({
+        user: userWithoutPassword,
+        token: generateToken({ id: user.id, name: user.name, email: user.email }),
+      });
+    } catch (error) {
+      console.error('Erro ao registrar usuário:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async login(req: Request, res: Response): Promise<Response> {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ message: 'Email e senha são obrigatórios' });
+      }
+
+      // Buscar usuário pelo email
+      const user = await userModel.findByEmail(email);
+      if (!user) {
+        return res.status(401).json({ message: 'Credenciais inválidas' });
+      }
+
+      // Verificar senha
+      const passwordMatch = await userModel.validatePassword(password, user.password_hash);
+      if (!passwordMatch) {
+        return res.status(401).json({ message: 'Credenciais inválidas' });
+      }
+
+      return res.json({
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        },
+        token: generateToken({ id: user.id, name: user.name, email: user.email }),
+      });
+    } catch (error) {
+      console.error('Erro ao fazer login:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async getProfile(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      const user = await userModel.findById(userId);
+
+      if (!user) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+
+      return res.json({ user });
+    } catch (error) {
+      console.error('Erro ao obter perfil:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+};
+
+export default authController;
+</file>
+
+<file path="backend/src/controllers/passwordController.ts">
+import { Request, Response } from 'express';
+import crypto from 'crypto';
+import userModel from '../models/userModel';
+import db from '../config/db';
+import { sendEmail } from '../services/emailService';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const passwordController = {
+  async forgotPassword(req: Request, res: Response): Promise<Response> {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({ message: 'Email é obrigatório' });
+      }
+
+      const user = await userModel.findByEmail(email);
+      if (!user) {
+        // Por segurança, não informamos se o email existe ou não
+        return res.status(200).json({ message: 'Se um usuário com esse email existir, enviaremos instruções de recuperação' });
+      }
+
+      // Gerar token
+      const token = crypto.randomBytes(20).toString('hex');
+      const now = new Date();
+      const expireDate = new Date(now);
+      expireDate.setHours(now.getHours() + 1); // Expira em 1 hora
+
+      // Salvar o token no banco
+      await db.query(
+        'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)',
+        [user.id, token, expireDate]
+      );
+
+      // Enviar email com o token
+      const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password/${token}`;
+
+      await sendEmail({
+        to: email,
+        subject: 'Recuperação de senha',
+        text: `Você solicitou a recuperação de senha. Use o link a seguir para definir uma nova senha: ${resetUrl}`,
+        html: `
+          <p>Você solicitou a recuperação de senha.</p>
+          <p>Use o link a seguir para definir uma nova senha:</p>
+          <a href="${resetUrl}">${resetUrl}</a>
+          <p>Se você não solicitou isso, ignore este email.</p>
+        `
+      });
+
+      return res.status(200).json({ message: 'Email de recuperação enviado' });
+    } catch (error) {
+      console.error('Erro ao solicitar recuperação de senha:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async resetPassword(req: Request, res: Response): Promise<Response> {
+    try {
+      const { token, password } = req.body;
+
+      if (!token || !password) {
+        return res.status(400).json({ message: 'Token e nova senha são obrigatórios' });
+      }
+
+      // Verificar se o token existe e está válido
+      const result = await db.query(
+        'SELECT * FROM password_reset_tokens WHERE token = $1 AND expires_at > CURRENT_TIMESTAMP',
+        [token]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(400).json({ message: 'Token inválido ou expirado' });
+      }
+
+      const resetToken = result.rows[0];
+      const userId = resetToken.user_id;
+
+      // Atualizar a senha
+      await userModel.updatePasswordHash(userId, password);
+
+      // Invalidar o token usado
+      await db.query('DELETE FROM password_reset_tokens WHERE id = $1', [resetToken.id]);
+
+      return res.status(200).json({ message: 'Senha atualizada com sucesso' });
+    } catch (error) {
+      console.error('Erro ao redefinir senha:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  }
+};
+
+export default passwordController;
+</file>
+
+<file path="backend/src/index.ts">
+// backend/src/index.ts
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import authRoutes from './routes/authRoutes';
+
+dotenv.config();
+
+const app = express();
+const port = process.env.PORT || 3001;
+
+// Middlewares
+app.use(cors());
+app.use(express.json());
+
+// Rotas
+app.use('/api/auth', authRoutes);
+
+// Rota de teste
+app.get('/', (req, res) => {
+  res.json({ message: 'API do Sistema de Manutenção de Ativos' });
+});
+
+// Iniciar servidor
+app.listen(port, () => {
+  console.log(`Servidor rodando na porta ${port}`);
+});
+</file>
+
+<file path="backend/src/middlewares/authMiddleware.ts">
+import { Request, Response, NextFunction } from 'express';
+import * as jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+interface TokenPayload {
+  id: number;
+  name: string;
+  email: string;
+}
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: TokenPayload;
+    }
+  }
+}
+
+export default function authMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void | Response {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({ message: 'Token não fornecido' });
+  }
+
+  const parts = authHeader.split(' ');
+
+  if (parts.length !== 2) {
+    return res.status(401).json({ message: 'Token com formato inválido' });
+  }
+
+  const [scheme, token] = parts;
+
+  if (!/^Bearer$/i.test(scheme)) {
+    return res.status(401).json({ message: 'Token mal formatado' });
+  }
+
+  try {
+    // Usando a tipagem correta para o secret
+    const secret: jwt.Secret = process.env.JWT_SECRET || 'default_secret';
+    const decoded = jwt.verify(token, secret) as TokenPayload;
+
+    req.user = decoded;
+
+    next();
+  } catch (err) {
+    return res.status(401).json({ message: 'Token inválido' });
+  }
+}
+</file>
+
+<file path="backend/src/models/userModel.ts">
+// backend/src/models/userModel.ts
+import db from '../config/db';
+import bcrypt from 'bcrypt';
+
+interface User {
+  id?: number;
+  name: string;
+  email: string;
+  password?: string;
+  password_hash?: string;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
+const userModel = {
+  async findByEmail(email: string) {
+    const result = await db.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email]
+    );
+    return result.rows[0];
+  },
+
+  async findById(id: number) {
+    const result = await db.query(
+      'SELECT id, name, email, created_at, updated_at FROM users WHERE id = $1',
+      [id]
+    );
+    return result.rows[0];
+  },
+
+  async create(user: User) {
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(user.password!, salt);
+
+    const result = await db.query(
+      'INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, name, email, created_at, updated_at',
+      [user.name, user.email, password_hash]
+    );
+
+    return result.rows[0];
+  },
+
+  async validatePassword(plainPassword: string, hashedPassword: string) {
+    return await bcrypt.compare(plainPassword, hashedPassword);
+  },
+
+  async updatePasswordHash(userId: number, newPassword: string) {
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(newPassword, salt);
+
+    const result = await db.query(
+      'UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id',
+      [password_hash, userId]
+    );
+
+    return result.rows[0];
+  }
+};
+
+export default userModel;
+</file>
+
+<file path="backend/src/routes/authRoutes.ts">
+// backend/src/routes/authRoutes.ts
+import { Router } from 'express';
+import authController from '../controllers/authController';
+import passwordController from '../controllers/passwordController';
+import authMiddleware from '../middlewares/authMiddleware';
+
+const router = Router();
+
+// Rotas públicas
+router.post('/register', (req, res) => authController.register(req, res));
+router.post('/login', (req, res) => authController.login(req, res));
+router.post('/forgot-password', (req, res) => passwordController.forgotPassword(req, res));
+router.post('/reset-password', (req, res) => passwordController.resetPassword(req, res));
+
+// Rotas protegidas
+router.get('/profile', authMiddleware, (req, res) => authController.getProfile(req, res));
+
+export default router;
+</file>
+
+<file path="backend/src/services/emailService.ts">
+// backend/src/services/emailService.ts
+import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+interface EmailOptions {
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+}
+
+export async function sendEmail(options: EmailOptions) {
+  // Criar transportador
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: false, // true para 465, false para outras portas
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+
+  // Enviar email
+  const info = await transporter.sendMail({
+    from: `"Sistema de Manutenção" <${process.env.SMTP_USER}>`,
+    to: options.to,
+    subject: options.subject,
+    text: options.text,
+    html: options.html,
+  });
+
+  console.log('Email enviado: %s', info.messageId);
+
+  return info;
+}
+</file>
+
+<file path="frontend/Dockerfile">
+FROM node:16-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+RUN npm run build
+
+# Se você estiver usando React ou outro framework com um servidor de desenvolvimento
+EXPOSE 3000
+
+# Para aplicativos React
+CMD ["npm", "start"]
+</file>
+
+<file path=".gitignore">
+# .gitignore na raiz do projeto (maintenance-system/.gitignore)
+
+# Dependências
+**/node_modules/
+
+# Builds
+**/dist/
+**/build/
+
+# Variáveis de ambiente
+**/.env
+**/.env.local
+**/docker-compose.override.yml
+
+# Logs
+*.log
+logs/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# IDEs/Editores
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Docker temporários
+**/docker-data/
+</file>
+
+<file path="backend/Dockerfile">
+FROM node:16-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+RUN npm run build
+
+EXPOSE 3001
+
+CMD ["npm", "start"]
+</file>
+
+<file path="backend/package.json">
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "nodemon src/index.ts",
+    "build": "tsc",
+    "setup-db": "ts-node src/config/setupDatabase.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@types/express": "^4.17.21",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^7.0.3",
+    "pg": "^8.16.0"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/cors": "^2.8.18",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/nodemailer": "^6.4.17",
+    "@types/pg": "^8.15.2",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
+</file>
+
+<file path="backend/src/config/database.sql">
+-- Tabelas necessárias para o sistema de manutenção de ativos
+
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE assets (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    location VARCHAR(100),
+    status VARCHAR(20) DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE maintenance_types (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    is_default BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE maintenance_records (
+    id SERIAL PRIMARY KEY,
+    asset_id INTEGER REFERENCES assets(id) ON DELETE CASCADE,
+    maintenance_type_id INTEGER REFERENCES maintenance_types(id) ON DELETE SET NULL,
+    date_performed DATE NOT NULL,
+    notes TEXT,
+    cost DECIMAL(10,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE maintenance_schedules (
+    id SERIAL PRIMARY KEY,
+    asset_id INTEGER REFERENCES assets(id) ON DELETE CASCADE,
+    maintenance_type_id INTEGER REFERENCES maintenance_types(id) ON DELETE SET NULL,
+    based_on_record_id INTEGER REFERENCES maintenance_records(id) ON DELETE SET NULL,
+    scheduled_date DATE NOT NULL,
+    status VARCHAR(20) DEFAULT 'pending',
+    frequency_type VARCHAR(20) NOT NULL,
+    frequency_value INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE password_reset_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    token VARCHAR(100) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Índices para melhorar performance
+CREATE INDEX idx_assets_user_id ON assets(user_id);
+CREATE INDEX idx_maintenance_records_asset_id ON maintenance_records(asset_id);
+CREATE INDEX idx_maintenance_schedules_asset_id ON maintenance_schedules(asset_id);
+CREATE INDEX idx_maintenance_schedules_status ON maintenance_schedules(status);
+</file>
+
+<file path="backend/src/config/db.ts">
+import { Pool } from 'pg';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+// Em vez de criar o pool imediatamente, crie uma função para obter o pool
+let pool: Pool;
+
+function getPool() {
+  if (!pool) {
+    pool = new Pool({
+      user: process.env.DB_USER || 'postgres',
+      host: process.env.DB_HOST || 'localhost',
+      database: process.env.DB_NAME || 'maintenance_system',
+      password: process.env.DB_PASSWORD || 'postgres',
+      port: parseInt(process.env.DB_PORT || '5432'),
+    });
+  }
+  return pool;
+}
+
+export default {
+  query: async (text: string, params?: any[]) => {
+    const client = await getPool().connect();
+    try {
+      return await client.query(text, params);
+    } finally {
+      client.release();
+    }
+  },
+  getClient: () => getPool().connect(),
+};
+</file>
+
+<file path="backend/tsconfig.json">
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.test.ts"
+  ]
+}
+</file>
+
+<file path="docker-compose.yml">
+services:
+  postgres:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: maintenance_system
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+    environment:
+      DB_HOST: postgres
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: maintenance_system
+      DB_PORT: 5432
+      NODE_ENV: development
+      PORT: 3001
+      JWT_SECRET: dev_secret
+      JWT_EXPIRES_IN: 1d
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+</file>
+
+<file path="frontend/.gitignore">
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+</file>
+
+<file path="frontend/eslint.config.js">
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import tseslint from 'typescript-eslint'
+
+export default tseslint.config(
+  { ignores: ['dist'] },
+  {
+    extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+    },
+    plugins: {
+      'react-hooks': reactHooks,
+      'react-refresh': reactRefresh,
+    },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowConstantExport: true },
+      ],
+    },
+  },
+)
+</file>
+
+<file path="frontend/index.html">
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + React + TS</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+</file>
+
+<file path="frontend/package.json">
+{
+  "name": "frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^7.1.0",
+    "@mui/material": "^7.1.0",
+    "axios": "^1.9.0",
+    "i18next": "^25.2.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-i18next": "^15.5.1",
+    "react-router-dom": "^7.6.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.25.0",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.4.1",
+    "eslint": "^9.25.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.30.1",
+    "vite": "^6.3.5"
+  }
+}
+</file>
+
+<file path="frontend/public/vite.svg">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="31.88" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 257"><defs><linearGradient id="IconifyId1813088fe1fbc01fb466" x1="-.828%" x2="57.636%" y1="7.652%" y2="78.411%"><stop offset="0%" stop-color="#41D1FF"></stop><stop offset="100%" stop-color="#BD34FE"></stop></linearGradient><linearGradient id="IconifyId1813088fe1fbc01fb467" x1="43.376%" x2="50.316%" y1="2.242%" y2="89.03%"><stop offset="0%" stop-color="#FFEA83"></stop><stop offset="8.333%" stop-color="#FFDD35"></stop><stop offset="100%" stop-color="#FFA800"></stop></linearGradient></defs><path fill="url(#IconifyId1813088fe1fbc01fb466)" d="M255.153 37.938L134.897 252.976c-2.483 4.44-8.862 4.466-11.382.048L.875 37.958c-2.746-4.814 1.371-10.646 6.827-9.67l120.385 21.517a6.537 6.537 0 0 0 2.322-.004l117.867-21.483c5.438-.991 9.574 4.796 6.877 9.62Z"></path><path fill="url(#IconifyId1813088fe1fbc01fb467)" d="M185.432.063L96.44 17.501a3.268 3.268 0 0 0-2.634 3.014l-5.474 92.456a3.268 3.268 0 0 0 3.997 3.378l24.777-5.718c2.318-.535 4.413 1.507 3.936 3.838l-7.361 36.047c-.495 2.426 1.782 4.5 4.151 3.78l15.304-4.649c2.372-.72 4.652 1.36 4.15 3.788l-11.698 56.621c-.732 3.542 3.979 5.473 5.943 2.437l1.313-2.028l72.516-144.72c1.215-2.423-.88-5.186-3.54-4.672l-25.505 4.922c-2.396.462-4.435-1.77-3.759-4.114l16.646-57.705c.677-2.35-1.37-4.583-3.769-4.113Z"></path></svg>
+</file>
+
+<file path="frontend/README.md">
+# React + TypeScript + Vite
+
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+
+Currently, two official plugins are available:
+
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+
+```js
+export default tseslint.config({
+  extends: [
+    // Remove ...tseslint.configs.recommended and replace with this
+    ...tseslint.configs.recommendedTypeChecked,
+    // Alternatively, use this for stricter rules
+    ...tseslint.configs.strictTypeChecked,
+    // Optionally, add this for stylistic rules
+    ...tseslint.configs.stylisticTypeChecked,
+  ],
+  languageOptions: {
+    // other options...
+    parserOptions: {
+      project: ['./tsconfig.node.json', './tsconfig.app.json'],
+      tsconfigRootDir: import.meta.dirname,
+    },
+  },
+})
+```
+
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
+
+export default tseslint.config({
+  plugins: {
+    // Add the react-x and react-dom plugins
+    'react-x': reactX,
+    'react-dom': reactDom,
+  },
+  rules: {
+    // other rules...
+    // Enable its recommended typescript rules
+    ...reactX.configs['recommended-typescript'].rules,
+    ...reactDom.configs.recommended.rules,
+  },
+})
+```
+</file>
+
+<file path="frontend/src/App.css">
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+</file>
+
+<file path="frontend/src/App.tsx">
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useContext } from 'react';
+import { AppContext } from './context/AppContext';
+import { Box } from '@mui/material';
+
+// Importe as páginas aqui (serão criadas depois)
+import Login from './pages/Login';
+import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import Dashboard from './pages/Dashboard';
+import Assets from './pages/Assets';
+import AssetDetails from './pages/AssetDetails';
+import Maintenance from './pages/Maintenance';
+
+// Componente de layout protegido
+import ProtectedLayout from './components/layout/ProtectedLayout';
+
+function App() {
+  const { themeMode } = useContext(AppContext);
+
+  return (
+    <Box
+      sx={{
+        bgcolor: 'background.default',
+        color: 'text.primary',
+        minHeight: '100vh',
+      }}
+    >
+      <Router>
+        <Routes>
+          {/* Rotas públicas */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+
+          {/* Rotas protegidas */}
+          <Route path="/" element={<ProtectedLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="assets" element={<Assets />} />
+            <Route path="assets/:id" element={<AssetDetails />} />
+            <Route path="maintenance" element={<Maintenance />} />
+          </Route>
+
+          {/* Rota padrão */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </Box>
+  );
+}
+
+export default App;
+</file>
+
+<file path="frontend/src/assets/react.svg">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="35.93" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 228"><path fill="#00D8FF" d="M210.483 73.824a171.49 171.49 0 0 0-8.24-2.597c.465-1.9.893-3.777 1.273-5.621c6.238-30.281 2.16-54.676-11.769-62.708c-13.355-7.7-35.196.329-57.254 19.526a171.23 171.23 0 0 0-6.375 5.848a155.866 155.866 0 0 0-4.241-3.917C100.759 3.829 77.587-4.822 63.673 3.233C50.33 10.957 46.379 33.89 51.995 62.588a170.974 170.974 0 0 0 1.892 8.48c-3.28.932-6.445 1.924-9.474 2.98C17.309 83.498 0 98.307 0 113.668c0 15.865 18.582 31.778 46.812 41.427a145.52 145.52 0 0 0 6.921 2.165a167.467 167.467 0 0 0-2.01 9.138c-5.354 28.2-1.173 50.591 12.134 58.266c13.744 7.926 36.812-.22 59.273-19.855a145.567 145.567 0 0 0 5.342-4.923a168.064 168.064 0 0 0 6.92 6.314c21.758 18.722 43.246 26.282 56.54 18.586c13.731-7.949 18.194-32.003 12.4-61.268a145.016 145.016 0 0 0-1.535-6.842c1.62-.48 3.21-.974 4.76-1.488c29.348-9.723 48.443-25.443 48.443-41.52c0-15.417-17.868-30.326-45.517-39.844Zm-6.365 70.984c-1.4.463-2.836.91-4.3 1.345c-3.24-10.257-7.612-21.163-12.963-32.432c5.106-11 9.31-21.767 12.459-31.957c2.619.758 5.16 1.557 7.61 2.4c23.69 8.156 38.14 20.213 38.14 29.504c0 9.896-15.606 22.743-40.946 31.14Zm-10.514 20.834c2.562 12.94 2.927 24.64 1.23 33.787c-1.524 8.219-4.59 13.698-8.382 15.893c-8.067 4.67-25.32-1.4-43.927-17.412a156.726 156.726 0 0 1-6.437-5.87c7.214-7.889 14.423-17.06 21.459-27.246c12.376-1.098 24.068-2.894 34.671-5.345a134.17 134.17 0 0 1 1.386 6.193ZM87.276 214.515c-7.882 2.783-14.16 2.863-17.955.675c-8.075-4.657-11.432-22.636-6.853-46.752a156.923 156.923 0 0 1 1.869-8.499c10.486 2.32 22.093 3.988 34.498 4.994c7.084 9.967 14.501 19.128 21.976 27.15a134.668 134.668 0 0 1-4.877 4.492c-9.933 8.682-19.886 14.842-28.658 17.94ZM50.35 144.747c-12.483-4.267-22.792-9.812-29.858-15.863c-6.35-5.437-9.555-10.836-9.555-15.216c0-9.322 13.897-21.212 37.076-29.293c2.813-.98 5.757-1.905 8.812-2.773c3.204 10.42 7.406 21.315 12.477 32.332c-5.137 11.18-9.399 22.249-12.634 32.792a134.718 134.718 0 0 1-6.318-1.979Zm12.378-84.26c-4.811-24.587-1.616-43.134 6.425-47.789c8.564-4.958 27.502 2.111 47.463 19.835a144.318 144.318 0 0 1 3.841 3.545c-7.438 7.987-14.787 17.08-21.808 26.988c-12.04 1.116-23.565 2.908-34.161 5.309a160.342 160.342 0 0 1-1.76-7.887Zm110.427 27.268a347.8 347.8 0 0 0-7.785-12.803c8.168 1.033 15.994 2.404 23.343 4.08c-2.206 7.072-4.956 14.465-8.193 22.045a381.151 381.151 0 0 0-7.365-13.322Zm-45.032-43.861c5.044 5.465 10.096 11.566 15.065 18.186a322.04 322.04 0 0 0-30.257-.006c4.974-6.559 10.069-12.652 15.192-18.18ZM82.802 87.83a323.167 323.167 0 0 0-7.227 13.238c-3.184-7.553-5.909-14.98-8.134-22.152c7.304-1.634 15.093-2.97 23.209-3.984a321.524 321.524 0 0 0-7.848 12.897Zm8.081 65.352c-8.385-.936-16.291-2.203-23.593-3.793c2.26-7.3 5.045-14.885 8.298-22.6a321.187 321.187 0 0 0 7.257 13.246c2.594 4.48 5.28 8.868 8.038 13.147Zm37.542 31.03c-5.184-5.592-10.354-11.779-15.403-18.433c4.902.192 9.899.29 14.978.29c5.218 0 10.376-.117 15.453-.343c-4.985 6.774-10.018 12.97-15.028 18.486Zm52.198-57.817c3.422 7.8 6.306 15.345 8.596 22.52c-7.422 1.694-15.436 3.058-23.88 4.071a382.417 382.417 0 0 0 7.859-13.026a347.403 347.403 0 0 0 7.425-13.565Zm-16.898 8.101a358.557 358.557 0 0 1-12.281 19.815a329.4 329.4 0 0 1-23.444.823c-7.967 0-15.716-.248-23.178-.732a310.202 310.202 0 0 1-12.513-19.846h.001a307.41 307.41 0 0 1-10.923-20.627a310.278 310.278 0 0 1 10.89-20.637l-.001.001a307.318 307.318 0 0 1 12.413-19.761c7.613-.576 15.42-.876 23.31-.876H128c7.926 0 15.743.303 23.354.883a329.357 329.357 0 0 1 12.335 19.695a358.489 358.489 0 0 1 11.036 20.54a329.472 329.472 0 0 1-11 20.722Zm22.56-122.124c8.572 4.944 11.906 24.881 6.52 51.026c-.344 1.668-.73 3.367-1.15 5.09c-10.622-2.452-22.155-4.275-34.23-5.408c-7.034-10.017-14.323-19.124-21.64-27.008a160.789 160.789 0 0 1 5.888-5.4c18.9-16.447 36.564-22.941 44.612-18.3ZM128 90.808c12.625 0 22.86 10.235 22.86 22.86s-10.235 22.86-22.86 22.86s-22.86-10.235-22.86-22.86s10.235-22.86 22.86-22.86Z"></path></svg>
+</file>
+
+<file path="frontend/src/components/layout/ProtectedLayout.tsx">
+import { useState, useContext } from 'react';
+import { Outlet, Navigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import {
+  AppBar, Box, Drawer, IconButton, Toolbar, Typography,
+  List, ListItem, ListItemIcon, ListItemText, Divider,
+  Menu, MenuItem, Button, useMediaQuery, useTheme
+} from '@mui/material';
+import {
+  Menu as MenuIcon, Dashboard, DirectionsCar, Build,
+  Brightness4, Brightness7, Language, Logout
+} from '@mui/icons-material';
+import { AppContext } from '../../context/AppContext';
+
+const drawerWidth = 240;
+
+const ProtectedLayout = () => {
+  const { t } = useTranslation();
+  const { themeMode, toggleTheme, language, changeLanguage } = useContext(AppContext);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [languageMenu, setLanguageMenu] = useState<null | HTMLElement>(null);
+  const location = useLocation();
+
+  // Verificar se o usuário está autenticado
+  const isAuthenticated = localStorage.getItem('token') !== null;
+
+  if (!isAuthenticated) {
+    // Redirecionar para login se não estiver autenticado
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  const handleLanguageMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setLanguageMenu(event.currentTarget);
+  };
+
+  const handleLanguageMenuClose = () => {
+    setLanguageMenu(null);
+  };
+
+  const handleLanguageChange = (lng: string) => {
+    changeLanguage(lng);
+    handleLanguageMenuClose();
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    window.location.href = '/login';
+  };
+
+  const menuItems = [
+    { text: t('dashboard.title'), icon: <Dashboard />, path: '/' },
+    { text: t('assets.title'), icon: <DirectionsCar />, path: '/assets' },
+    { text: t('maintenance.title'), icon: <Build />, path: '/maintenance' },
+  ];
+
+  const drawer = (
+    <>
+      <Toolbar>
+        <Typography variant="h6" noWrap component="div">
+          {t('app.title')}
+        </Typography>
+      </Toolbar>
+      <Divider />
+      <List>
+        {menuItems.map((item) => (
+          <ListItem
+            button
+            key={item.text}
+            onClick={() => {
+              window.location.href = item.path;
+              if (isMobile) handleDrawerToggle();
+            }}
+            selected={location.pathname === item.path}
+          >
+            <ListItemIcon>{item.icon}</ListItemIcon>
+            <ListItemText primary={item.text} />
+          </ListItem>
+        ))}
+      </List>
+    </>
+  );
+
+  return (
+    <Box sx={{ display: 'flex' }}>
+      <AppBar
+        position="fixed"
+        sx={{
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          ml: { sm: `${drawerWidth}px` },
+        }}
+      >
+        <Toolbar>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            edge="start"
+            onClick={handleDrawerToggle}
+            sx={{ mr: 2, display: { sm: 'none' } }}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+            {menuItems.find(item => item.path === location.pathname)?.text || t('app.title')}
+          </Typography>
+
+          {/* Botão de alternância de tema */}
+          <IconButton color="inherit" onClick={toggleTheme}>
+            {themeMode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+          </IconButton>
+
+          {/* Menu de idiomas */}
+          <IconButton
+            color="inherit"
+            aria-controls="language-menu"
+            aria-haspopup="true"
+            onClick={handleLanguageMenuOpen}
+          >
+            <Language />
+          </IconButton>
+          <Menu
+            id="language-menu"
+            anchorEl={languageMenu}
+            keepMounted
+            open={Boolean(languageMenu)}
+            onClose={handleLanguageMenuClose}
+          >
+            <MenuItem onClick={() => handleLanguageChange('pt')}>
+              {t('app.language.pt')}
+            </MenuItem>
+            <MenuItem onClick={() => handleLanguageChange('en')}>
+              {t('app.language.en')}
+            </MenuItem>
+            <MenuItem onClick={() => handleLanguageChange('es')}>
+              {t('app.language.es')}
+            </MenuItem>
+          </Menu>
+
+          {/* Botão de logout */}
+          <Button
+            color="inherit"
+            onClick={handleLogout}
+            startIcon={<Logout />}
+          >
+            {t('auth.logout')}
+          </Button>
+        </Toolbar>
+      </AppBar>
+
+      <Box
+        component="nav"
+        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+      >
+        {/* Drawer para dispositivos móveis */}
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{
+            keepMounted: true, // Melhor desempenho em dispositivos móveis
+          }}
+          sx={{
+            display: { xs: 'block', sm: 'none' },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+          }}
+        >
+          {drawer}
+        </Drawer>
+
+        {/* Drawer para desktop */}
+        <Drawer
+          variant="permanent"
+          sx={{
+            display: { xs: 'none', sm: 'block' },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+          }}
+          open
+        >
+          {drawer}
+        </Drawer>
+      </Box>
+
+      {/* Conteúdo principal */}
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          mt: 8
+        }}
+      >
+        <Outlet />
+      </Box>
+    </Box>
+  );
+};
+
+export default ProtectedLayout;
+</file>
+
+<file path="frontend/src/context/AppContext.tsx">
+import React, { createContext, useState, useEffect, useMemo, ReactNode } from 'react';
+import { ThemeProvider, PaletteMode } from '@mui/material';
+import { getTheme } from '../theme';
+import { useTranslation } from 'react-i18next';
+
+interface AppContextType {
+  themeMode: PaletteMode;
+  toggleTheme: () => void;
+  language: string;
+  changeLanguage: (lng: string) => void;
+}
+
+export const AppContext = createContext<AppContextType>({
+  themeMode: 'light',
+  toggleTheme: () => { },
+  language: 'pt',
+  changeLanguage: () => { },
+});
+
+interface AppProviderProps {
+  children: ReactNode;
+}
+
+export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
+  const [themeMode, setThemeMode] = useState<PaletteMode>(
+    (localStorage.getItem('themeMode') as PaletteMode) || 'light'
+  );
+
+  const { i18n } = useTranslation();
+
+  const toggleTheme = () => {
+    const newMode = themeMode === 'light' ? 'dark' : 'light';
+    setThemeMode(newMode);
+    localStorage.setItem('themeMode', newMode);
+  };
+
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
+    localStorage.setItem('language', lng);
+  };
+
+  useEffect(() => {
+    // Inicializar com o tema salvo no localStorage
+    const savedTheme = localStorage.getItem('themeMode') as PaletteMode;
+    if (savedTheme) {
+      setThemeMode(savedTheme);
+    }
+
+    // Inicializar com o idioma salvo no localStorage
+    const savedLanguage = localStorage.getItem('language');
+    if (savedLanguage) {
+      i18n.changeLanguage(savedLanguage);
+    }
+  }, [i18n]);
+
+  const theme = useMemo(() => getTheme(themeMode), [themeMode]);
+
+  const contextValue = useMemo(
+    () => ({
+      themeMode,
+      toggleTheme,
+      language: i18n.language,
+      changeLanguage,
+    }),
+    [themeMode, i18n.language]
+  );
+
+  return (
+    <AppContext.Provider value={contextValue}>
+      <ThemeProvider theme={theme}>
+        {children}
+      </ThemeProvider>
+    </AppContext.Provider>
+  );
+};
+</file>
+
+<file path="frontend/src/index.css">
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
+</file>
+
+<file path="frontend/src/locales/en/translation.json">
+{
+  "app": {
+    "title": "Asset Maintenance Assistant",
+    "theme": {
+      "light": "Light Theme",
+      "dark": "Dark Theme"
+    },
+    "language": {
+      "pt": "Portuguese",
+      "en": "English",
+      "es": "Spanish"
+    }
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "name": "Name",
+    "forgotPassword": "Forgot Password?",
+    "resetPassword": "Reset Password",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?"
+  },
+  "dashboard": {
+    "title": "Main Dashboard",
+    "upcomingMaintenance": "Upcoming Maintenance",
+    "overdueMaintenance": "Overdue Maintenance",
+    "assetCount": "Total Assets",
+    "maintenanceCount": "Total Maintenances"
+  },
+  "assets": {
+    "title": "My Assets",
+    "add": "Add Asset",
+    "edit": "Edit Asset",
+    "delete": "Remove Asset",
+    "name": "Name",
+    "description": "Description",
+    "location": "Location",
+    "status": {
+      "title": "Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "maintenance": "Under Maintenance"
+    },
+    "noAssets": "No assets registered"
+  },
+  "maintenance": {
+    "title": "Maintenance",
+    "add": "Log Maintenance",
+    "edit": "Edit Maintenance",
+    "delete": "Remove Maintenance",
+    "type": "Maintenance Type",
+    "date": "Date",
+    "notes": "Notes",
+    "cost": "Cost",
+    "nextDate": "Next Due Date",
+    "frequency": {
+      "title": "Frequency",
+      "days": "Days",
+      "weeks": "Weeks",
+      "months": "Months",
+      "kilometers": "Kilometers",
+      "hours": "Usage Hours"
+    },
+    "status": {
+      "title": "Status",
+      "pending": "Pending",
+      "completed": "Completed",
+      "overdue": "Overdue"
+    },
+    "noRecords": "No maintenance records"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "confirm": "Confirm",
+    "back": "Back",
+    "search": "Search",
+    "loading": "Loading...",
+    "success": "Success!",
+    "error": "Error!",
+    "required": "Required field"
+  }
+}
+</file>
+
+<file path="frontend/src/locales/es/translation.json">
+{
+  "app": {
+    "title": "Asistente de Mantenimiento de Activos",
+    "theme": {
+      "light": "Tema Claro",
+      "dark": "Tema Oscuro"
+    },
+    "language": {
+      "pt": "Portugués",
+      "en": "Inglés",
+      "es": "Español"
+    }
+  },
+  "auth": {
+    "login": "Iniciar Sesión",
+    "register": "Registrarse",
+    "logout": "Cerrar Sesión",
+    "email": "Correo Electrónico",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar Contraseña",
+    "name": "Nombre",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "resetPassword": "Recuperar Contraseña",
+    "noAccount": "¿No tienes una cuenta?",
+    "hasAccount": "¿Ya tienes una cuenta?"
+  },
+  "dashboard": {
+    "title": "Panel Principal",
+    "upcomingMaintenance": "Mantenimientos Próximos",
+    "overdueMaintenance": "Mantenimientos Atrasados",
+    "assetCount": "Total de Activos",
+    "maintenanceCount": "Total de Mantenimientos"
+  },
+  "assets": {
+    "title": "Mis Activos",
+    "add": "Agregar Activo",
+    "edit": "Editar Activo",
+    "delete": "Eliminar Activo",
+    "name": "Nombre",
+    "description": "Descripción",
+    "location": "Ubicación",
+    "status": {
+      "title": "Estado",
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "maintenance": "En Mantenimiento"
+    },
+    "noAssets": "No hay activos registrados"
+  },
+  "maintenance": {
+    "title": "Mantenimiento",
+    "add": "Registrar Mantenimiento",
+    "edit": "Editar Mantenimiento",
+    "delete": "Eliminar Mantenimiento",
+    "type": "Tipo de Mantenimiento",
+    "date": "Fecha",
+    "notes": "Notas",
+    "cost": "Costo",
+    "nextDate": "Próxima Fecha",
+    "frequency": {
+      "title": "Frecuencia",
+      "days": "Días",
+      "weeks": "Semanas",
+      "months": "Meses",
+      "kilometers": "Kilómetros",
+      "hours": "Horas de Uso"
+    },
+    "status": {
+      "title": "Estado",
+      "pending": "Pendiente",
+      "completed": "Completado",
+      "overdue": "Atrasado"
+    },
+    "noRecords": "No hay registros de mantenimiento"
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "view": "Ver",
+    "confirm": "Confirmar",
+    "back": "Volver",
+    "search": "Buscar",
+    "loading": "Cargando...",
+    "success": "¡Éxito!",
+    "error": "¡Error!",
+    "required": "Campo requerido"
+  }
+}
+</file>
+
+<file path="frontend/src/locales/i18n.ts">
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+
+// Importar arquivos de tradução
+import translationPT from './pt/translation.json';
+import translationEN from './en/translation.json';
+import translationES from './es/translation.json';
+
+// Recursos de linguagem
+const resources = {
+  pt: {
+    translation: translationPT
+  },
+  en: {
+    translation: translationEN
+  },
+  es: {
+    translation: translationES
+  }
+};
+
+i18n
+  .use(initReactI18next)
+  .init({
+    resources,
+    lng: localStorage.getItem('language') || 'pt', // Idioma padrão
+    fallbackLng: 'pt',
+    interpolation: {
+      escapeValue: false // React já faz escape
+    }
+  });
+
+export default i18n;
+</file>
+
+<file path="frontend/src/locales/pt/translation.json">
+{
+  "app": {
+    "title": "Assistente de Manutenção de Ativos",
+    "theme": {
+      "light": "Tema Claro",
+      "dark": "Tema Escuro"
+    },
+    "language": {
+      "pt": "Português",
+      "en": "Inglês",
+      "es": "Espanhol"
+    }
+  },
+  "auth": {
+    "login": "Entrar",
+    "register": "Cadastrar",
+    "logout": "Sair",
+    "email": "E-mail",
+    "password": "Senha",
+    "confirmPassword": "Confirmar Senha",
+    "name": "Nome",
+    "forgotPassword": "Esqueceu a senha?",
+    "resetPassword": "Recuperar Senha",
+    "noAccount": "Não tem uma conta?",
+    "hasAccount": "Já tem uma conta?"
+  },
+  "dashboard": {
+    "title": "Painel Principal",
+    "upcomingMaintenance": "Manutenções Próximas",
+    "overdueMaintenace": "Manutenções Atrasadas",
+    "assetCount": "Total de Ativos",
+    "maintenanceCount": "Total de Manutenções"
+  },
+  "assets": {
+    "title": "Meus Ativos",
+    "add": "Adicionar Ativo",
+    "edit": "Editar Ativo",
+    "delete": "Remover Ativo",
+    "name": "Nome",
+    "description": "Descrição",
+    "location": "Localização",
+    "status": {
+      "title": "Status",
+      "active": "Ativo",
+      "inactive": "Inativo",
+      "maintenance": "Em Manutenção"
+    },
+    "noAssets": "Nenhum ativo cadastrado"
+  },
+  "maintenance": {
+    "title": "Manutenções",
+    "add": "Registrar Manutenção",
+    "edit": "Editar Manutenção",
+    "delete": "Remover Manutenção",
+    "type": "Tipo de Manutenção",
+    "date": "Data",
+    "notes": "Observações",
+    "cost": "Custo",
+    "nextDate": "Próxima Data",
+    "frequency": {
+      "title": "Frequência",
+      "days": "Dias",
+      "weeks": "Semanas",
+      "months": "Meses",
+      "kilometers": "Quilômetros",
+      "hours": "Horas de Uso"
+    },
+    "status": {
+      "title": "Status",
+      "pending": "Pendente",
+      "completed": "Concluída",
+      "overdue": "Atrasada"
+    },
+    "noRecords": "Nenhuma manutenção registrada"
+  },
+  "common": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "view": "Visualizar",
+    "confirm": "Confirmar",
+    "back": "Voltar",
+    "search": "Buscar",
+    "loading": "Carregando...",
+    "success": "Sucesso!",
+    "error": "Erro!",
+    "required": "Campo obrigatório"
+  }
+}
+</file>
+
+<file path="frontend/src/main.tsx">
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.tsx'
+import './index.css'
+import { AppProvider } from './context/AppContext'
+import './locales/i18n'
+import { CssBaseline } from '@mui/material'
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <AppProvider>
+      <CssBaseline />
+      <App />
+    </AppProvider>
+  </React.StrictMode>,
+)
+</file>
+
+<file path="frontend/src/theme/index.ts">
+import { createTheme, PaletteMode } from '@mui/material';
+
+export const getTheme = (mode: PaletteMode) => createTheme({
+  palette: {
+    mode,
+    ...(mode === 'light'
+      ? {
+        // Paleta modo claro
+        primary: {
+          main: '#1976d2',
+        },
+        secondary: {
+          main: '#dc004e',
+        },
+        background: {
+          default: '#f5f5f5',
+          paper: '#ffffff',
+        },
+      }
+      : {
+        // Paleta modo escuro
+        primary: {
+          main: '#90caf9',
+        },
+        secondary: {
+          main: '#f48fb1',
+        },
+        background: {
+          default: '#121212',
+          paper: '#1e1e1e',
+        },
+      }),
+  },
+});
+</file>
+
+<file path="frontend/src/vite-env.d.ts">
+/// <reference types="vite/client" />
+</file>
+
+<file path="frontend/tsconfig.app.json">
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": ["src"]
+}
+</file>
+
+<file path="frontend/tsconfig.json">
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}
+</file>
+
+<file path="frontend/tsconfig.node.json">
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": ["vite.config.ts"]
+}
+</file>
+
+<file path="frontend/vite.config.ts">
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'path'
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+  server: {
+    port: 3000,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '')
+      }
+    }
+  }
+})
+</file>
+
+</files>
