@@ -5,6 +5,7 @@ import { Box } from '@mui/material';
 
 // Páginas que existem
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Assets from './pages/Assets';
 
 // Componente de layout protegido
@@ -33,7 +34,7 @@ function App() {
         <Routes>
           {/* Rotas públicas */}
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<ComingSoon pageName="Cadastro" />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ComingSoon pageName="Esqueci a Senha" />} />
           <Route path="/reset-password/:token" element={<ComingSoon pageName="Redefinir Senha" />} />
 

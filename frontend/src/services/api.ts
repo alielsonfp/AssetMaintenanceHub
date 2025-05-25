@@ -9,7 +9,8 @@ import type {
 } from '../types';
 
 // Configurar URL base da API
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// frontend/src/services/api.ts
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 // Criar instância do axios
 const api = axios.create({
