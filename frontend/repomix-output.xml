@@ -47,6 +47,7 @@ The content is organized as follows:
 .gitignore
 Dockerfile
 eslint.config.js
+frontrepomix-output.xml
 index.html
 package.json
 public/vite.svg
@@ -63,8 +64,170 @@ src/locales/i18n.ts
 src/locales/pt/translation.json
 src/main.tsx
 src/pages/Assets.tsx
+src/pages/Dashboard.tsx
+src/pages/ForgotPassword.tsx
 src/pages/Login.tsx
 src/pages/Register.tsx
+src/pages/ResetPassword.tsx
+src/services/api.ts
+src/theme/index.ts
+src/types/index.ts
+src/vite-env.d.ts
+tsconfig.app.json
+tsconfig.json
+tsconfig.node.json
+vite.config.ts
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path=".gitignore">
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+</file>
+
+<file path="Dockerfile">
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+RUN npm run build
+
+EXPOSE 3000
+
+CMD ["npm", "run", "preview"]
+</file>
+
+<file path="eslint.config.js">
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import tseslint from 'typescript-eslint'
+
+export default tseslint.config(
+  { ignores: ['dist'] },
+  {
+    extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+    },
+    plugins: {
+      'react-hooks': reactHooks,
+      'react-refresh': reactRefresh,
+    },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowConstantExport: true },
+      ],
+    },
+  },
+)
+</file>
+
+<file path="frontrepomix-output.xml">
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+4. Repository files, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+<additional_info>
+
+</additional_info>
+
+</file_summary>
+
+<directory_structure>
+.gitignore
+Dockerfile
+eslint.config.js
+index.html
+package.json
+public/vite.svg
+README.md
+src/App.css
+src/App.tsx
+src/assets/react.svg
+src/components/layout/ProtectedLayout.tsx
+src/context/AppContext.tsx
+src/index.css
+src/locales/en/translation.json
+src/locales/es/translation.json
+src/locales/i18n.ts
+src/locales/pt/translation.json
+src/main.tsx
+src/pages/Assets.tsx
+src/pages/ForgotPassword.tsx
+src/pages/Login.tsx
+src/pages/Register.tsx
+src/pages/ResetPassword.tsx
 src/services/api.ts
 src/theme/index.ts
 src/types/index.ts
@@ -321,9 +484,13 @@ import { useContext } from 'react';
 import { AppContext } from './context/AppContext';
 import { Box } from '@mui/material';
 
-// Páginas que existem
+// Páginas de autenticação
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+
+// Páginas protegidas
 import Assets from './pages/Assets';
 
 // Componente de layout protegido
@@ -350,11 +517,11 @@ function App() {
     >
       <Router>
         <Routes>
-          {/* Rotas públicas */}
+          {/* Rotas públicas de autenticação */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ComingSoon pageName="Esqueci a Senha" />} />
-          <Route path="/reset-password/:token" element={<ComingSoon pageName="Redefinir Senha" />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
 
           {/* Rotas protegidas */}
           <Route path="/" element={<ProtectedLayout />}>
@@ -1386,6 +1553,187 @@ const Assets: React.FC = () => {
 export default Assets;
 </file>
 
+<file path="src/pages/ForgotPassword.tsx">
+// frontend/src/pages/ForgotPassword.tsx
+import React, { useState } from 'react';
+import {
+  Box,
+  Paper,
+  TextField,
+  Button,
+  Typography,
+  Link,
+  Alert,
+  Container
+} from '@mui/material';
+import { useTranslation } from 'react-i18next';
+import { Link as RouterLink } from 'react-router-dom';
+import { authService } from '../services/api';
+
+const ForgotPassword: React.FC = () => {
+  const { t } = useTranslation();
+
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(event.target.value);
+    if (error) setError('');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!email) {
+      setError('Por favor, informe seu e-mail');
+      return;
+    }
+
+    if (!email.includes('@')) {
+      setError('Por favor, informe um e-mail válido');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError('');
+
+      await authService.forgotPassword(email);
+      setSuccess(true);
+    } catch (error: any) {
+      console.error('Erro ao solicitar recuperação:', error);
+      const message = error.response?.data?.message || 'Erro ao enviar e-mail de recuperação';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <Container component="main" maxWidth="sm">
+        <Box
+          sx={{
+            minHeight: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <Paper elevation={3} sx={{ padding: 4, width: '100%' }}>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography component="h1" variant="h4" fontWeight="bold" sx={{ mb: 2 }}>
+                E-mail enviado!
+              </Typography>
+
+              <Alert severity="success" sx={{ mb: 3 }}>
+                Instruções para recuperar sua senha foram enviadas para <strong>{email}</strong>
+              </Alert>
+
+              <Typography variant="body1" sx={{ mb: 3 }}>
+                Verifique sua caixa de entrada e spam. O link de recuperação expira em 1 hora.
+              </Typography>
+
+              <Button
+                component={RouterLink}
+                to="/login"
+                variant="contained"
+                size="large"
+                fullWidth
+              >
+                Voltar ao Login
+              </Button>
+            </Box>
+          </Paper>
+        </Box>
+      </Container>
+    );
+  }
+
+  return (
+    <Container component="main" maxWidth="sm">
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <Paper elevation={3} sx={{ padding: 4, width: '100%' }}>
+          <Box sx={{ textAlign: 'center', mb: 3 }}>
+            <Typography component="h1" variant="h4" fontWeight="bold">
+              {t('auth.forgotPassword')}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              Informe seu e-mail para receber instruções de recuperação
+            </Typography>
+          </Box>
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          <Box component="form" onSubmit={handleSubmit}>
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="email"
+              label={t('auth.email')}
+              name="email"
+              autoComplete="email"
+              autoFocus
+              value={email}
+              onChange={handleChange}
+              disabled={loading}
+              placeholder="seu@email.com"
+            />
+
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3, mb: 2 }}
+              disabled={loading || !email}
+              size="large"
+            >
+              {loading ? t('common.loading') : 'Enviar instruções'}
+            </Button>
+
+            <Box sx={{ textAlign: 'center', mt: 2 }}>
+              <Typography variant="body2">
+                Lembrou da senha?{' '}
+                <Link component={RouterLink} to="/login">
+                  {t('auth.login')}
+                </Link>
+              </Typography>
+            </Box>
+
+            <Box sx={{ textAlign: 'center', mt: 1 }}>
+              <Typography variant="body2">
+                Não tem conta?{' '}
+                <Link component={RouterLink} to="/register">
+                  {t('auth.register')}
+                </Link>
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+      </Box>
+    </Container>
+  );
+};
+
+export default ForgotPassword;
+</file>
+
 <file path="src/pages/Login.tsx">
 // frontend/src/pages/Login.tsx
 import React, { useState } from 'react';
@@ -1742,6 +2090,224 @@ const Register: React.FC = () => {
 export default Register;
 </file>
 
+<file path="src/pages/ResetPassword.tsx">
+// frontend/src/pages/ResetPassword.tsx
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Paper,
+  TextField,
+  Button,
+  Typography,
+  Link,
+  Alert,
+  Container
+} from '@mui/material';
+import { useTranslation } from 'react-i18next';
+import { Link as RouterLink, useParams, useNavigate } from 'react-router-dom';
+import { authService } from '../services/api';
+
+const ResetPassword: React.FC = () => {
+  const { t } = useTranslation();
+  const { token } = useParams<{ token: string }>();
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
+    password: '',
+    confirmPassword: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  // Verificar se tem token
+  useEffect(() => {
+    if (!token) {
+      setError('Token de recuperação inválido');
+    }
+  }, [token]);
+
+  const handleChange = (field: 'password' | 'confirmPassword') => (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: event.target.value
+    }));
+    if (error) setError('');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!token) {
+      setError('Token de recuperação inválido');
+      return;
+    }
+
+    if (!formData.password || !formData.confirmPassword) {
+      setError('Por favor, preencha todos os campos');
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('As senhas não coincidem');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError('');
+
+      await authService.resetPassword(token, formData.password);
+      setSuccess(true);
+
+      // Redirecionar para login após 3 segundos
+      setTimeout(() => {
+        navigate('/login');
+      }, 3000);
+    } catch (error: any) {
+      console.error('Erro ao redefinir senha:', error);
+      const message = error.response?.data?.message || 'Erro ao redefinir senha';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <Container component="main" maxWidth="sm">
+        <Box
+          sx={{
+            minHeight: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <Paper elevation={3} sx={{ padding: 4, width: '100%' }}>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography component="h1" variant="h4" fontWeight="bold" sx={{ mb: 2 }}>
+                Senha redefinida!
+              </Typography>
+
+              <Alert severity="success" sx={{ mb: 3 }}>
+                Sua senha foi alterada com sucesso.
+              </Alert>
+
+              <Typography variant="body1" sx={{ mb: 3 }}>
+                Você será redirecionado para o login em alguns segundos...
+              </Typography>
+
+              <Button
+                component={RouterLink}
+                to="/login"
+                variant="contained"
+                size="large"
+                fullWidth
+              >
+                Ir para Login
+              </Button>
+            </Box>
+          </Paper>
+        </Box>
+      </Container>
+    );
+  }
+
+  return (
+    <Container component="main" maxWidth="sm">
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <Paper elevation={3} sx={{ padding: 4, width: '100%' }}>
+          <Box sx={{ textAlign: 'center', mb: 3 }}>
+            <Typography component="h1" variant="h4" fontWeight="bold">
+              {t('auth.resetPassword')}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              Digite sua nova senha
+            </Typography>
+          </Box>
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          <Box component="form" onSubmit={handleSubmit}>
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="password"
+              label="Nova senha"
+              type="password"
+              id="password"
+              autoComplete="new-password"
+              autoFocus
+              value={formData.password}
+              onChange={handleChange('password')}
+              disabled={loading}
+            />
+
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="confirmPassword"
+              label="Confirmar nova senha"
+              type="password"
+              id="confirmPassword"
+              autoComplete="new-password"
+              value={formData.confirmPassword}
+              onChange={handleChange('confirmPassword')}
+              disabled={loading}
+            />
+
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3, mb: 2 }}
+              disabled={loading || !formData.password || !formData.confirmPassword}
+              size="large"
+            >
+              {loading ? t('common.loading') : 'Redefinir senha'}
+            </Button>
+
+            <Box sx={{ textAlign: 'center', mt: 2 }}>
+              <Typography variant="body2">
+                Lembrou da senha?{' '}
+                <Link component={RouterLink} to="/login">
+                  {t('auth.login')}
+                </Link>
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+      </Box>
+    </Container>
+  );
+};
+
+export default ResetPassword;
+</file>
+
 <file path="src/services/api.ts">
 import axios from 'axios';
 import type {
@@ -1754,7 +2320,2890 @@ import type {
 } from '../types';
 
 // Configurar URL base da API
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// frontend/src/services/api.ts
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+
+// Criar instância do axios
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Interceptor para adicionar token nas requisições
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Interceptor para tratar erros de autenticação
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token expirado ou inválido
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Serviços de autenticação
+export const authService = {
+  async login(email: string, password: string): Promise<AuthResponse> {
+    const response = await api.post('/auth/login', { email, password });
+    return response.data;
+  },
+
+  async register(name: string, email: string, password: string): Promise<AuthResponse> {
+    const response = await api.post('/auth/register', { name, email, password });
+    return response.data;
+  },
+
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    const response = await api.post('/auth/forgot-password', { email });
+    return response.data;
+  },
+
+  async resetPassword(token: string, password: string): Promise<{ message: string }> {
+    const response = await api.post('/auth/reset-password', { token, password });
+    return response.data;
+  },
+
+  async getProfile(): Promise<{ user: any }> {
+    const response = await api.get('/auth/profile');
+    return response.data;
+  }
+};
+
+// Serviços de ativos
+export const assetService = {
+  async getAll(): Promise<AssetsResponse> {
+    const response = await api.get('/assets');
+    return response.data;
+  },
+
+  async getById(id: number): Promise<AssetResponse> {
+    const response = await api.get(`/assets/${id}`);
+    return response.data;
+  },
+
+  async create(assetData: CreateAssetData): Promise<AssetResponse> {
+    const response = await api.post('/assets', assetData);
+    return response.data;
+  },
+
+  async update(id: number, assetData: UpdateAssetData): Promise<AssetResponse> {
+    const response = await api.put(`/assets/${id}`, assetData);
+    return response.data;
+  },
+
+  async delete(id: number): Promise<{ message: string }> {
+    const response = await api.delete(`/assets/${id}`);
+    return response.data;
+  },
+
+  async getStats(): Promise<StatsResponse> {
+    const response = await api.get('/assets/stats');
+    return response.data;
+  }
+};
+
+export default api;
+</file>
+
+<file path="src/theme/index.ts">
+import { createTheme } from '@mui/material/styles';
+import type { PaletteMode } from '@mui/material';
+
+export const getTheme = (mode: PaletteMode) => createTheme({
+  palette: {
+    mode,
+    ...(mode === 'light'
+      ? {
+        // Paleta modo claro
+        primary: {
+          main: '#1976d2',
+        },
+        secondary: {
+          main: '#dc004e',
+        },
+        background: {
+          default: '#f5f5f5',
+          paper: '#ffffff',
+        },
+      }
+      : {
+        // Paleta modo escuro
+        primary: {
+          main: '#90caf9',
+        },
+        secondary: {
+          main: '#f48fb1',
+        },
+        background: {
+          default: '#121212',
+          paper: '#1e1e1e',
+        },
+      }),
+  },
+});
+</file>
+
+<file path="src/types/index.ts">
+// frontend/src/types/index.ts
+
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Asset {
+  id: number;
+  user_id: number;
+  name: string;
+  description?: string;
+  location?: string;
+  status: 'active' | 'inactive' | 'maintenance';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateAssetData {
+  name: string;
+  description?: string;
+  location?: string;
+  status?: 'active' | 'inactive' | 'maintenance';
+}
+
+export interface UpdateAssetData {
+  name?: string;
+  description?: string;
+  location?: string;
+  status?: 'active' | 'inactive' | 'maintenance';
+}
+
+export interface AssetStats {
+  total: number;
+  active: number;
+  inactive: number;
+  maintenance: number;
+}
+
+export interface ApiResponse<T> {
+  message?: string;
+  data?: T;
+  error?: string;
+}
+
+export interface AuthResponse {
+  user: User;
+  token: string;
+}
+
+export interface AssetsResponse {
+  assets: Asset[];
+  total: number;
+}
+
+export interface AssetResponse {
+  asset: Asset;
+}
+
+export interface StatsResponse {
+  stats: AssetStats;
+}
+</file>
+
+<file path="src/vite-env.d.ts">
+/// <reference types="vite/client" />
+</file>
+
+<file path="tsconfig.app.json">
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": [
+    "src"
+  ]
+}
+</file>
+
+<file path="tsconfig.json">
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}
+</file>
+
+<file path="tsconfig.node.json">
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": ["vite.config.ts"]
+}
+</file>
+
+<file path="vite.config.ts">
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'path'
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+  server: {
+    port: 3000,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      }
+    }
+  }
+})
+</file>
+
+</files>
+</file>
+
+<file path="index.html">
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + React + TS</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+</file>
+
+<file path="package.json">
+{
+  "name": "frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@mui/icons-material": "^5.16.0",
+    "@mui/material": "^5.16.0",
+    "axios": "^1.9.0",
+    "i18next": "^25.2.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-i18next": "^15.5.1",
+    "react-router-dom": "^7.6.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.25.0",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.4.1",
+    "eslint": "^9.25.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "typescript": "~5.8.3",
+    "vite": "^6.3.5"
+  }
+}
+</file>
+
+<file path="public/vite.svg">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="31.88" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 257"><defs><linearGradient id="IconifyId1813088fe1fbc01fb466" x1="-.828%" x2="57.636%" y1="7.652%" y2="78.411%"><stop offset="0%" stop-color="#41D1FF"></stop><stop offset="100%" stop-color="#BD34FE"></stop></linearGradient><linearGradient id="IconifyId1813088fe1fbc01fb467" x1="43.376%" x2="50.316%" y1="2.242%" y2="89.03%"><stop offset="0%" stop-color="#FFEA83"></stop><stop offset="8.333%" stop-color="#FFDD35"></stop><stop offset="100%" stop-color="#FFA800"></stop></linearGradient></defs><path fill="url(#IconifyId1813088fe1fbc01fb466)" d="M255.153 37.938L134.897 252.976c-2.483 4.44-8.862 4.466-11.382.048L.875 37.958c-2.746-4.814 1.371-10.646 6.827-9.67l120.385 21.517a6.537 6.537 0 0 0 2.322-.004l117.867-21.483c5.438-.991 9.574 4.796 6.877 9.62Z"></path><path fill="url(#IconifyId1813088fe1fbc01fb467)" d="M185.432.063L96.44 17.501a3.268 3.268 0 0 0-2.634 3.014l-5.474 92.456a3.268 3.268 0 0 0 3.997 3.378l24.777-5.718c2.318-.535 4.413 1.507 3.936 3.838l-7.361 36.047c-.495 2.426 1.782 4.5 4.151 3.78l15.304-4.649c2.372-.72 4.652 1.36 4.15 3.788l-11.698 56.621c-.732 3.542 3.979 5.473 5.943 2.437l1.313-2.028l72.516-144.72c1.215-2.423-.88-5.186-3.54-4.672l-25.505 4.922c-2.396.462-4.435-1.77-3.759-4.114l16.646-57.705c.677-2.35-1.37-4.583-3.769-4.113Z"></path></svg>
+</file>
+
+<file path="README.md">
+# React + TypeScript + Vite
+
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+
+Currently, two official plugins are available:
+
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+
+```js
+export default tseslint.config({
+  extends: [
+    // Remove ...tseslint.configs.recommended and replace with this
+    ...tseslint.configs.recommendedTypeChecked,
+    // Alternatively, use this for stricter rules
+    ...tseslint.configs.strictTypeChecked,
+    // Optionally, add this for stylistic rules
+    ...tseslint.configs.stylisticTypeChecked,
+  ],
+  languageOptions: {
+    // other options...
+    parserOptions: {
+      project: ['./tsconfig.node.json', './tsconfig.app.json'],
+      tsconfigRootDir: import.meta.dirname,
+    },
+  },
+})
+```
+
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
+
+export default tseslint.config({
+  plugins: {
+    // Add the react-x and react-dom plugins
+    'react-x': reactX,
+    'react-dom': reactDom,
+  },
+  rules: {
+    // other rules...
+    // Enable its recommended typescript rules
+    ...reactX.configs['recommended-typescript'].rules,
+    ...reactDom.configs.recommended.rules,
+  },
+})
+```
+</file>
+
+<file path="src/App.css">
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+</file>
+
+<file path="src/App.tsx">
+// frontend/src/App.tsx
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useContext } from 'react';
+import { AppContext } from './context/AppContext';
+import { Box } from '@mui/material';
+
+// Páginas de autenticação
+import Login from './pages/Login';
+import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+
+// Páginas protegidas
+import Dashboard from './pages/Dashboard';
+import Assets from './pages/Assets';
+
+// Componente de layout protegido
+import ProtectedLayout from './components/layout/ProtectedLayout';
+
+// Componentes temporários para páginas que não existem ainda
+const ComingSoon = ({ pageName }: { pageName: string }) => (
+  <Box sx={{ p: 3, textAlign: 'center' }}>
+    <h2>{pageName}</h2>
+    <p>Esta página será implementada em breve...</p>
+  </Box>
+);
+
+function App() {
+  const { themeMode } = useContext(AppContext);
+
+  return (
+    <Box
+      sx={{
+        bgcolor: 'background.default',
+        color: 'text.primary',
+        minHeight: '100vh',
+      }}
+    >
+      <Router>
+        <Routes>
+          {/* Rotas públicas de autenticação */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+
+          {/* Rotas protegidas */}
+          <Route path="/" element={<ProtectedLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="assets" element={<Assets />} />
+            <Route path="assets/:id" element={<ComingSoon pageName="Detalhes do Ativo" />} />
+            <Route path="maintenance" element={<ComingSoon pageName="Manutenções" />} />
+          </Route>
+
+          {/* Rota padrão */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </Box>
+  );
+}
+
+export default App;
+</file>
+
+<file path="src/assets/react.svg">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="35.93" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 228"><path fill="#00D8FF" d="M210.483 73.824a171.49 171.49 0 0 0-8.24-2.597c.465-1.9.893-3.777 1.273-5.621c6.238-30.281 2.16-54.676-11.769-62.708c-13.355-7.7-35.196.329-57.254 19.526a171.23 171.23 0 0 0-6.375 5.848a155.866 155.866 0 0 0-4.241-3.917C100.759 3.829 77.587-4.822 63.673 3.233C50.33 10.957 46.379 33.89 51.995 62.588a170.974 170.974 0 0 0 1.892 8.48c-3.28.932-6.445 1.924-9.474 2.98C17.309 83.498 0 98.307 0 113.668c0 15.865 18.582 31.778 46.812 41.427a145.52 145.52 0 0 0 6.921 2.165a167.467 167.467 0 0 0-2.01 9.138c-5.354 28.2-1.173 50.591 12.134 58.266c13.744 7.926 36.812-.22 59.273-19.855a145.567 145.567 0 0 0 5.342-4.923a168.064 168.064 0 0 0 6.92 6.314c21.758 18.722 43.246 26.282 56.54 18.586c13.731-7.949 18.194-32.003 12.4-61.268a145.016 145.016 0 0 0-1.535-6.842c1.62-.48 3.21-.974 4.76-1.488c29.348-9.723 48.443-25.443 48.443-41.52c0-15.417-17.868-30.326-45.517-39.844Zm-6.365 70.984c-1.4.463-2.836.91-4.3 1.345c-3.24-10.257-7.612-21.163-12.963-32.432c5.106-11 9.31-21.767 12.459-31.957c2.619.758 5.16 1.557 7.61 2.4c23.69 8.156 38.14 20.213 38.14 29.504c0 9.896-15.606 22.743-40.946 31.14Zm-10.514 20.834c2.562 12.94 2.927 24.64 1.23 33.787c-1.524 8.219-4.59 13.698-8.382 15.893c-8.067 4.67-25.32-1.4-43.927-17.412a156.726 156.726 0 0 1-6.437-5.87c7.214-7.889 14.423-17.06 21.459-27.246c12.376-1.098 24.068-2.894 34.671-5.345a134.17 134.17 0 0 1 1.386 6.193ZM87.276 214.515c-7.882 2.783-14.16 2.863-17.955.675c-8.075-4.657-11.432-22.636-6.853-46.752a156.923 156.923 0 0 1 1.869-8.499c10.486 2.32 22.093 3.988 34.498 4.994c7.084 9.967 14.501 19.128 21.976 27.15a134.668 134.668 0 0 1-4.877 4.492c-9.933 8.682-19.886 14.842-28.658 17.94ZM50.35 144.747c-12.483-4.267-22.792-9.812-29.858-15.863c-6.35-5.437-9.555-10.836-9.555-15.216c0-9.322 13.897-21.212 37.076-29.293c2.813-.98 5.757-1.905 8.812-2.773c3.204 10.42 7.406 21.315 12.477 32.332c-5.137 11.18-9.399 22.249-12.634 32.792a134.718 134.718 0 0 1-6.318-1.979Zm12.378-84.26c-4.811-24.587-1.616-43.134 6.425-47.789c8.564-4.958 27.502 2.111 47.463 19.835a144.318 144.318 0 0 1 3.841 3.545c-7.438 7.987-14.787 17.08-21.808 26.988c-12.04 1.116-23.565 2.908-34.161 5.309a160.342 160.342 0 0 1-1.76-7.887Zm110.427 27.268a347.8 347.8 0 0 0-7.785-12.803c8.168 1.033 15.994 2.404 23.343 4.08c-2.206 7.072-4.956 14.465-8.193 22.045a381.151 381.151 0 0 0-7.365-13.322Zm-45.032-43.861c5.044 5.465 10.096 11.566 15.065 18.186a322.04 322.04 0 0 0-30.257-.006c4.974-6.559 10.069-12.652 15.192-18.18ZM82.802 87.83a323.167 323.167 0 0 0-7.227 13.238c-3.184-7.553-5.909-14.98-8.134-22.152c7.304-1.634 15.093-2.97 23.209-3.984a321.524 321.524 0 0 0-7.848 12.897Zm8.081 65.352c-8.385-.936-16.291-2.203-23.593-3.793c2.26-7.3 5.045-14.885 8.298-22.6a321.187 321.187 0 0 0 7.257 13.246c2.594 4.48 5.28 8.868 8.038 13.147Zm37.542 31.03c-5.184-5.592-10.354-11.779-15.403-18.433c4.902.192 9.899.29 14.978.29c5.218 0 10.376-.117 15.453-.343c-4.985 6.774-10.018 12.97-15.028 18.486Zm52.198-57.817c3.422 7.8 6.306 15.345 8.596 22.52c-7.422 1.694-15.436 3.058-23.88 4.071a382.417 382.417 0 0 0 7.859-13.026a347.403 347.403 0 0 0 7.425-13.565Zm-16.898 8.101a358.557 358.557 0 0 1-12.281 19.815a329.4 329.4 0 0 1-23.444.823c-7.967 0-15.716-.248-23.178-.732a310.202 310.202 0 0 1-12.513-19.846h.001a307.41 307.41 0 0 1-10.923-20.627a310.278 310.278 0 0 1 10.89-20.637l-.001.001a307.318 307.318 0 0 1 12.413-19.761c7.613-.576 15.42-.876 23.31-.876H128c7.926 0 15.743.303 23.354.883a329.357 329.357 0 0 1 12.335 19.695a358.489 358.489 0 0 1 11.036 20.54a329.472 329.472 0 0 1-11 20.722Zm22.56-122.124c8.572 4.944 11.906 24.881 6.52 51.026c-.344 1.668-.73 3.367-1.15 5.09c-10.622-2.452-22.155-4.275-34.23-5.408c-7.034-10.017-14.323-19.124-21.64-27.008a160.789 160.789 0 0 1 5.888-5.4c18.9-16.447 36.564-22.941 44.612-18.3ZM128 90.808c12.625 0 22.86 10.235 22.86 22.86s-10.235 22.86-22.86 22.86s-22.86-10.235-22.86-22.86s10.235-22.86 22.86-22.86Z"></path></svg>
+</file>
+
+<file path="src/components/layout/ProtectedLayout.tsx">
+import { useState, useContext } from 'react';
+import { Outlet, Navigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import {
+  AppBar, Box, Drawer, IconButton, Toolbar, Typography,
+  List, ListItem, ListItemIcon, ListItemText, Divider,
+  Menu, MenuItem, Button, useMediaQuery, useTheme
+} from '@mui/material';
+import {
+  Menu as MenuIcon, Dashboard, DirectionsCar, Build,
+  Brightness4, Brightness7, Language, Logout
+} from '@mui/icons-material';
+import { AppContext } from '../../context/AppContext';
+
+const drawerWidth = 240;
+
+const ProtectedLayout = () => {
+  const { t } = useTranslation();
+  const { themeMode, toggleTheme, language, changeLanguage } = useContext(AppContext);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [languageMenu, setLanguageMenu] = useState<null | HTMLElement>(null);
+  const location = useLocation();
+
+  // Verificar se o usuário está autenticado
+  const isAuthenticated = localStorage.getItem('token') !== null;
+
+  if (!isAuthenticated) {
+    // Redirecionar para login se não estiver autenticado
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  const handleLanguageMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setLanguageMenu(event.currentTarget);
+  };
+
+  const handleLanguageMenuClose = () => {
+    setLanguageMenu(null);
+  };
+
+  const handleLanguageChange = (lng: string) => {
+    changeLanguage(lng);
+    handleLanguageMenuClose();
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    window.location.href = '/login';
+  };
+
+  const menuItems = [
+    { text: t('dashboard.title'), icon: <Dashboard />, path: '/' },
+    { text: t('assets.title'), icon: <DirectionsCar />, path: '/assets' },
+    { text: t('maintenance.title'), icon: <Build />, path: '/maintenance' },
+  ];
+
+  const drawer = (
+    <>
+      <Toolbar>
+        <Typography variant="h6" noWrap component="div">
+          {t('app.title')}
+        </Typography>
+      </Toolbar>
+      <Divider />
+      <List>
+        {menuItems.map((item) => (
+          <ListItem
+            button
+            key={item.text}
+            onClick={() => {
+              window.location.href = item.path;
+              if (isMobile) handleDrawerToggle();
+            }}
+            selected={location.pathname === item.path}
+          >
+            <ListItemIcon>{item.icon}</ListItemIcon>
+            <ListItemText primary={item.text} />
+          </ListItem>
+        ))}
+      </List>
+    </>
+  );
+
+  return (
+    <Box sx={{ display: 'flex' }}>
+      <AppBar
+        position="fixed"
+        sx={{
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          ml: { sm: `${drawerWidth}px` },
+        }}
+      >
+        <Toolbar>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            edge="start"
+            onClick={handleDrawerToggle}
+            sx={{ mr: 2, display: { sm: 'none' } }}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+            {menuItems.find(item => item.path === location.pathname)?.text || t('app.title')}
+          </Typography>
+
+          {/* Botão de alternância de tema */}
+          <IconButton color="inherit" onClick={toggleTheme}>
+            {themeMode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+          </IconButton>
+
+          {/* Menu de idiomas */}
+          <IconButton
+            color="inherit"
+            aria-controls="language-menu"
+            aria-haspopup="true"
+            onClick={handleLanguageMenuOpen}
+          >
+            <Language />
+          </IconButton>
+          <Menu
+            id="language-menu"
+            anchorEl={languageMenu}
+            keepMounted
+            open={Boolean(languageMenu)}
+            onClose={handleLanguageMenuClose}
+          >
+            <MenuItem onClick={() => handleLanguageChange('pt')}>
+              {t('app.language.pt')}
+            </MenuItem>
+            <MenuItem onClick={() => handleLanguageChange('en')}>
+              {t('app.language.en')}
+            </MenuItem>
+            <MenuItem onClick={() => handleLanguageChange('es')}>
+              {t('app.language.es')}
+            </MenuItem>
+          </Menu>
+
+          {/* Botão de logout */}
+          <Button
+            color="inherit"
+            onClick={handleLogout}
+            startIcon={<Logout />}
+          >
+            {t('auth.logout')}
+          </Button>
+        </Toolbar>
+      </AppBar>
+
+      <Box
+        component="nav"
+        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+      >
+        {/* Drawer para dispositivos móveis */}
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{
+            keepMounted: true, // Melhor desempenho em dispositivos móveis
+          }}
+          sx={{
+            display: { xs: 'block', sm: 'none' },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+          }}
+        >
+          {drawer}
+        </Drawer>
+
+        {/* Drawer para desktop */}
+        <Drawer
+          variant="permanent"
+          sx={{
+            display: { xs: 'none', sm: 'block' },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+          }}
+          open
+        >
+          {drawer}
+        </Drawer>
+      </Box>
+
+      {/* Conteúdo principal */}
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          mt: 8
+        }}
+      >
+        <Outlet />
+      </Box>
+    </Box>
+  );
+};
+
+export default ProtectedLayout;
+</file>
+
+<file path="src/context/AppContext.tsx">
+import React, { createContext, useState, useEffect, useMemo } from 'react';
+import type { ReactNode } from 'react';
+import { ThemeProvider } from '@mui/material';
+import type { PaletteMode } from '@mui/material';
+import { getTheme } from '../theme';
+import { useTranslation } from 'react-i18next';
+
+
+interface AppContextType {
+  themeMode: PaletteMode;
+  toggleTheme: () => void;
+  language: string;
+  changeLanguage: (lng: string) => void;
+}
+
+export const AppContext = createContext<AppContextType>({
+  themeMode: 'light',
+  toggleTheme: () => { },
+  language: 'pt',
+  changeLanguage: () => { },
+});
+
+interface AppProviderProps {
+  children: ReactNode;
+}
+
+export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
+  const [themeMode, setThemeMode] = useState<PaletteMode>(
+    (localStorage.getItem('themeMode') as PaletteMode) || 'light'
+  );
+
+  const { i18n } = useTranslation();
+
+  const toggleTheme = () => {
+    const newMode = themeMode === 'light' ? 'dark' : 'light';
+    setThemeMode(newMode);
+    localStorage.setItem('themeMode', newMode);
+  };
+
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
+    localStorage.setItem('language', lng);
+  };
+
+  useEffect(() => {
+    // Inicializar com o tema salvo no localStorage
+    const savedTheme = localStorage.getItem('themeMode') as PaletteMode;
+    if (savedTheme) {
+      setThemeMode(savedTheme);
+    }
+
+    // Inicializar com o idioma salvo no localStorage
+    const savedLanguage = localStorage.getItem('language');
+    if (savedLanguage) {
+      i18n.changeLanguage(savedLanguage);
+    }
+  }, [i18n]);
+
+  const theme = useMemo(() => getTheme(themeMode), [themeMode]);
+
+  const contextValue = useMemo(
+    () => ({
+      themeMode,
+      toggleTheme,
+      language: i18n.language,
+      changeLanguage,
+    }),
+    [themeMode, i18n.language]
+  );
+
+  return (
+    <AppContext.Provider value={contextValue}>
+      <ThemeProvider theme={theme}>
+        {children}
+      </ThemeProvider>
+    </AppContext.Provider>
+  );
+};
+</file>
+
+<file path="src/index.css">
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
+</file>
+
+<file path="src/locales/en/translation.json">
+{
+  "app": {
+    "title": "Asset Maintenance Assistant",
+    "theme": {
+      "light": "Light Theme",
+      "dark": "Dark Theme"
+    },
+    "language": {
+      "pt": "Portuguese",
+      "en": "English",
+      "es": "Spanish"
+    }
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "name": "Name",
+    "forgotPassword": "Forgot Password?",
+    "resetPassword": "Reset Password",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?"
+  },
+  "dashboard": {
+    "title": "Main Dashboard",
+    "upcomingMaintenance": "Upcoming Maintenance",
+    "overdueMaintenance": "Overdue Maintenance",
+    "assetCount": "Total Assets",
+    "maintenanceCount": "Total Maintenances"
+  },
+  "assets": {
+    "title": "My Assets",
+    "add": "Add Asset",
+    "edit": "Edit Asset",
+    "delete": "Remove Asset",
+    "name": "Name",
+    "description": "Description",
+    "location": "Location",
+    "status": {
+      "title": "Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "maintenance": "Under Maintenance"
+    },
+    "noAssets": "No assets registered"
+  },
+  "maintenance": {
+    "title": "Maintenance",
+    "add": "Log Maintenance",
+    "edit": "Edit Maintenance",
+    "delete": "Remove Maintenance",
+    "type": "Maintenance Type",
+    "date": "Date",
+    "notes": "Notes",
+    "cost": "Cost",
+    "nextDate": "Next Due Date",
+    "frequency": {
+      "title": "Frequency",
+      "days": "Days",
+      "weeks": "Weeks",
+      "months": "Months",
+      "kilometers": "Kilometers",
+      "hours": "Usage Hours"
+    },
+    "status": {
+      "title": "Status",
+      "pending": "Pending",
+      "completed": "Completed",
+      "overdue": "Overdue"
+    },
+    "noRecords": "No maintenance records"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "confirm": "Confirm",
+    "back": "Back",
+    "search": "Search",
+    "loading": "Loading...",
+    "success": "Success!",
+    "error": "Error!",
+    "required": "Required field"
+  }
+}
+</file>
+
+<file path="src/locales/es/translation.json">
+{
+  "app": {
+    "title": "Asistente de Mantenimiento de Activos",
+    "theme": {
+      "light": "Tema Claro",
+      "dark": "Tema Oscuro"
+    },
+    "language": {
+      "pt": "Portugués",
+      "en": "Inglés",
+      "es": "Español"
+    }
+  },
+  "auth": {
+    "login": "Iniciar Sesión",
+    "register": "Registrarse",
+    "logout": "Cerrar Sesión",
+    "email": "Correo Electrónico",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar Contraseña",
+    "name": "Nombre",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "resetPassword": "Recuperar Contraseña",
+    "noAccount": "¿No tienes una cuenta?",
+    "hasAccount": "¿Ya tienes una cuenta?"
+  },
+  "dashboard": {
+    "title": "Panel Principal",
+    "upcomingMaintenance": "Mantenimientos Próximos",
+    "overdueMaintenance": "Mantenimientos Atrasados",
+    "assetCount": "Total de Activos",
+    "maintenanceCount": "Total de Mantenimientos"
+  },
+  "assets": {
+    "title": "Mis Activos",
+    "add": "Agregar Activo",
+    "edit": "Editar Activo",
+    "delete": "Eliminar Activo",
+    "name": "Nombre",
+    "description": "Descripción",
+    "location": "Ubicación",
+    "status": {
+      "title": "Estado",
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "maintenance": "En Mantenimiento"
+    },
+    "noAssets": "No hay activos registrados"
+  },
+  "maintenance": {
+    "title": "Mantenimiento",
+    "add": "Registrar Mantenimiento",
+    "edit": "Editar Mantenimiento",
+    "delete": "Eliminar Mantenimiento",
+    "type": "Tipo de Mantenimiento",
+    "date": "Fecha",
+    "notes": "Notas",
+    "cost": "Costo",
+    "nextDate": "Próxima Fecha",
+    "frequency": {
+      "title": "Frecuencia",
+      "days": "Días",
+      "weeks": "Semanas",
+      "months": "Meses",
+      "kilometers": "Kilómetros",
+      "hours": "Horas de Uso"
+    },
+    "status": {
+      "title": "Estado",
+      "pending": "Pendiente",
+      "completed": "Completado",
+      "overdue": "Atrasado"
+    },
+    "noRecords": "No hay registros de mantenimiento"
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "view": "Ver",
+    "confirm": "Confirmar",
+    "back": "Volver",
+    "search": "Buscar",
+    "loading": "Cargando...",
+    "success": "¡Éxito!",
+    "error": "¡Error!",
+    "required": "Campo requerido"
+  }
+}
+</file>
+
+<file path="src/locales/i18n.ts">
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+
+// Importar arquivos de tradução
+import translationPT from './pt/translation.json';
+import translationEN from './en/translation.json';
+import translationES from './es/translation.json';
+
+// Recursos de linguagem
+const resources = {
+  pt: {
+    translation: translationPT
+  },
+  en: {
+    translation: translationEN
+  },
+  es: {
+    translation: translationES
+  }
+};
+
+i18n
+  .use(initReactI18next)
+  .init({
+    resources,
+    lng: localStorage.getItem('language') || 'pt', // Idioma padrão
+    fallbackLng: 'pt',
+    interpolation: {
+      escapeValue: false // React já faz escape
+    }
+  });
+
+export default i18n;
+</file>
+
+<file path="src/locales/pt/translation.json">
+{
+  "app": {
+    "title": "Assistente de Manutenção de Ativos",
+    "theme": {
+      "light": "Tema Claro",
+      "dark": "Tema Escuro"
+    },
+    "language": {
+      "pt": "Português",
+      "en": "Inglês",
+      "es": "Espanhol"
+    }
+  },
+  "auth": {
+    "login": "Entrar",
+    "register": "Cadastrar",
+    "logout": "Sair",
+    "email": "E-mail",
+    "password": "Senha",
+    "confirmPassword": "Confirmar Senha",
+    "name": "Nome",
+    "forgotPassword": "Esqueceu a senha?",
+    "resetPassword": "Recuperar Senha",
+    "noAccount": "Não tem uma conta?",
+    "hasAccount": "Já tem uma conta?"
+  },
+  "dashboard": {
+    "title": "Painel Principal",
+    "upcomingMaintenance": "Manutenções Próximas",
+    "overdueMaintenace": "Manutenções Atrasadas",
+    "assetCount": "Total de Ativos",
+    "maintenanceCount": "Total de Manutenções"
+  },
+  "assets": {
+    "title": "Meus Ativos",
+    "add": "Adicionar Ativo",
+    "edit": "Editar Ativo",
+    "delete": "Remover Ativo",
+    "name": "Nome",
+    "description": "Descrição",
+    "location": "Localização",
+    "status": {
+      "title": "Status",
+      "active": "Ativo",
+      "inactive": "Inativo",
+      "maintenance": "Em Manutenção"
+    },
+    "noAssets": "Nenhum ativo cadastrado"
+  },
+  "maintenance": {
+    "title": "Manutenções",
+    "add": "Registrar Manutenção",
+    "edit": "Editar Manutenção",
+    "delete": "Remover Manutenção",
+    "type": "Tipo de Manutenção",
+    "date": "Data",
+    "notes": "Observações",
+    "cost": "Custo",
+    "nextDate": "Próxima Data",
+    "frequency": {
+      "title": "Frequência",
+      "days": "Dias",
+      "weeks": "Semanas",
+      "months": "Meses",
+      "kilometers": "Quilômetros",
+      "hours": "Horas de Uso"
+    },
+    "status": {
+      "title": "Status",
+      "pending": "Pendente",
+      "completed": "Concluída",
+      "overdue": "Atrasada"
+    },
+    "noRecords": "Nenhuma manutenção registrada"
+  },
+  "common": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "view": "Visualizar",
+    "confirm": "Confirmar",
+    "back": "Voltar",
+    "search": "Buscar",
+    "loading": "Carregando...",
+    "success": "Sucesso!",
+    "error": "Erro!",
+    "required": "Campo obrigatório"
+  }
+}
+</file>
+
+<file path="src/main.tsx">
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.tsx'
+import './index.css'
+import { AppProvider } from './context/AppContext'
+import './locales/i18n'
+import { CssBaseline } from '@mui/material'
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <AppProvider>
+      <CssBaseline />
+      <App />
+    </AppProvider>
+  </React.StrictMode>,
+)
+</file>
+
+<file path="src/pages/Assets.tsx">
+// frontend/src/pages/Assets.tsx
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Typography,
+  Button,
+  Paper,
+  Alert,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  CircularProgress
+} from '@mui/material';
+import { Add, Edit, Delete } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
+import type { Asset, CreateAssetData, UpdateAssetData } from '../types';
+import { assetService } from '../services/api';
+
+
+const Assets: React.FC = () => {
+  const { t } = useTranslation();
+
+  // Estados
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  // Form data
+  const [formData, setFormData] = useState<CreateAssetData>({
+    name: '',
+    description: '',
+    location: '',
+    status: 'active'
+  });
+
+  // Carregar ativos
+  const loadAssets = async () => {
+    try {
+      setLoading(true);
+      const response = await assetService.getAll();
+      setAssets(response.assets);
+      setError('');
+    } catch (error: any) {
+      console.error('Erro ao carregar ativos:', error);
+      setError('Erro ao carregar ativos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Carregar ativos na montagem
+  useEffect(() => {
+    loadAssets();
+  }, []);
+
+  // Handlers do formulário
+  const handleAddAsset = () => {
+    setEditingAsset(null);
+    setFormData({ name: '', description: '', location: '', status: 'active' });
+    setFormOpen(true);
+  };
+
+  const handleEditAsset = (asset: Asset) => {
+    setEditingAsset(asset);
+    setFormData({
+      name: asset.name,
+      description: asset.description || '',
+      location: asset.location || '',
+      status: asset.status
+    });
+    setFormOpen(true);
+  };
+
+  const handleFormClose = () => {
+    setFormOpen(false);
+    setEditingAsset(null);
+    setFormData({ name: '', description: '', location: '', status: 'active' });
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.name.trim()) {
+      setError('Nome é obrigatório');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      setError('');
+
+      const submitData = {
+        name: formData.name.trim(),
+        ...(formData.description && { description: formData.description.trim() }),
+        ...(formData.location && { location: formData.location.trim() }),
+        status: formData.status
+      };
+
+      if (editingAsset) {
+        await assetService.update(editingAsset.id, submitData);
+        setSuccess('Ativo atualizado com sucesso!');
+      } else {
+        await assetService.create(submitData);
+        setSuccess('Ativo criado com sucesso!');
+      }
+
+      await loadAssets();
+      handleFormClose();
+    } catch (error: any) {
+      console.error('Erro ao salvar ativo:', error);
+      setError(error.response?.data?.message || 'Erro ao salvar ativo');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (asset: Asset) => {
+    if (window.confirm(`Tem certeza que deseja remover "${asset.name}"?`)) {
+      try {
+        await assetService.delete(asset.id);
+        setSuccess('Ativo removido com sucesso!');
+        await loadAssets();
+      } catch (error: any) {
+        console.error('Erro ao deletar ativo:', error);
+        setError(error.response?.data?.message || 'Erro ao remover ativo');
+      }
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'success';
+      case 'inactive': return 'default';
+      case 'maintenance': return 'warning';
+      default: return 'default';
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
+  return (
+    <Box>
+      {/* Header */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4" component="h1" fontWeight="bold">
+          {t('assets.title')}
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<Add />}
+          onClick={handleAddAsset}
+          size="large"
+        >
+          {t('assets.add')}
+        </Button>
+      </Box>
+
+      {/* Alertas */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
+          {error}
+        </Alert>
+      )}
+
+      {success && (
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess('')}>
+          {success}
+        </Alert>
+      )}
+
+      {/* Tabela de Ativos */}
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell><strong>Nome</strong></TableCell>
+              <TableCell><strong>Descrição</strong></TableCell>
+              <TableCell><strong>Localização</strong></TableCell>
+              <TableCell><strong>Status</strong></TableCell>
+              <TableCell><strong>Criado em</strong></TableCell>
+              <TableCell><strong>Ações</strong></TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} sx={{ textAlign: 'center', py: 4 }}>
+                  <CircularProgress />
+                </TableCell>
+              </TableRow>
+            ) : assets.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} sx={{ textAlign: 'center', py: 4 }}>
+                  {t('assets.noAssets')}
+                </TableCell>
+              </TableRow>
+            ) : (
+              assets.map((asset) => (
+                <TableRow key={asset.id}>
+                  <TableCell>{asset.name}</TableCell>
+                  <TableCell>{asset.description || '-'}</TableCell>
+                  <TableCell>{asset.location || '-'}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={t(`assets.status.${asset.status}`)}
+                      color={getStatusColor(asset.status) as any}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell>{formatDate(asset.created_at)}</TableCell>
+                  <TableCell>
+                    <IconButton onClick={() => handleEditAsset(asset)} color="primary">
+                      <Edit />
+                    </IconButton>
+                    <IconButton onClick={() => handleDelete(asset)} color="error">
+                      <Delete />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      {/* Dialog do Formulário */}
+      <Dialog open={formOpen} onClose={handleFormClose} maxWidth="sm" fullWidth>
+        <form onSubmit={handleFormSubmit}>
+          <DialogTitle>
+            {editingAsset ? t('assets.edit') : t('assets.add')}
+          </DialogTitle>
+
+          <DialogContent>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+              <TextField
+                label="Nome *"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                fullWidth
+                required
+                disabled={submitting}
+              />
+
+              <TextField
+                label="Descrição"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                multiline
+                rows={3}
+                fullWidth
+                disabled={submitting}
+              />
+
+              <TextField
+                label="Localização"
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                fullWidth
+                disabled={submitting}
+              />
+
+              <FormControl fullWidth disabled={submitting}>
+                <InputLabel>Status</InputLabel>
+                <Select
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                  label="Status"
+                >
+                  <MenuItem value="active">{t('assets.status.active')}</MenuItem>
+                  <MenuItem value="inactive">{t('assets.status.inactive')}</MenuItem>
+                  <MenuItem value="maintenance">{t('assets.status.maintenance')}</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          </DialogContent>
+
+          <DialogActions>
+            <Button onClick={handleFormClose} disabled={submitting}>
+              {t('common.cancel')}
+            </Button>
+            <Button type="submit" variant="contained" disabled={submitting}>
+              {submitting ? t('common.loading') : t('common.save')}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+    </Box>
+  );
+};
+
+export default Assets;
+</file>
+
+<file path="src/pages/Dashboard.tsx">
+// frontend/src/pages/Dashboard.tsx
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Grid,
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  Paper,
+  Chip,
+  LinearProgress,
+  Avatar,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  ListItemSecondaryAction,
+  Fab,
+  Alert,
+  Skeleton,
+  useTheme,
+  alpha
+} from '@mui/material';
+import {
+  DirectionsCar,
+  Build,
+  CheckCircle,
+  Warning,
+  Error,
+  Add,
+  TrendingUp,
+  Schedule,
+  Assessment,
+  Notifications
+} from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  BarChart,
+  Bar
+} from 'recharts';
+import { assetService } from '../services/api';
+import type { AssetStats } from '../types';
+
+// Tipos para os dados do dashboard
+interface MaintenanceItem {
+  id: number;
+  assetName: string;
+  type: string;
+  dueDate: string;
+  status: 'upcoming' | 'overdue' | 'today';
+  daysUntil: number;
+}
+
+interface DashboardStats {
+  assets: AssetStats;
+  maintenances: {
+    upcoming: number;
+    overdue: number;
+    thisWeek: number;
+    thisMonth: number;
+  };
+}
+
+const Dashboard: React.FC = () => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const theme = useTheme();
+
+  // Estados
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [upcomingMaintenances, setUpcomingMaintenances] = useState<MaintenanceItem[]>([]);
+
+  // Carregar dados do dashboard
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+
+      // Carregar estatísticas de ativos
+      const assetStatsResponse = await assetService.getStats();
+
+      // Por enquanto, dados de manutenção simulados (será substituído pela API real)
+      const mockMaintenances: MaintenanceItem[] = [
+        {
+          id: 1,
+          assetName: "Meu Carro - Gol",
+          type: "Troca de óleo",
+          dueDate: "2025-05-26",
+          status: "upcoming",
+          daysUntil: 2
+        },
+        {
+          id: 2,
+          assetName: "Prensa Hidráulica",
+          type: "Lubrificação geral",
+          dueDate: "2025-05-24",
+          status: "today",
+          daysUntil: 0
+        },
+        {
+          id: 3,
+          assetName: "Servidor Principal",
+          type: "Limpeza e verificação",
+          dueDate: "2025-05-22",
+          status: "overdue",
+          daysUntil: -2
+        },
+        {
+          id: 4,
+          assetName: "Ar Condicionado",
+          type: "Troca de filtros",
+          dueDate: "2025-05-28",
+          status: "upcoming",
+          daysUntil: 4
+        }
+      ];
+
+      setStats({
+        assets: assetStatsResponse.stats,
+        maintenances: {
+          upcoming: mockMaintenances.filter(m => m.status === 'upcoming').length,
+          overdue: mockMaintenances.filter(m => m.status === 'overdue').length,
+          thisWeek: mockMaintenances.filter(m => m.daysUntil <= 7 && m.daysUntil >= 0).length,
+          thisMonth: mockMaintenances.length
+        }
+      });
+
+      setUpcomingMaintenances(mockMaintenances);
+      setError('');
+    } catch (error: any) {
+      console.error('Erro ao carregar dashboard:', error);
+      setError('Erro ao carregar dados do dashboard');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  // Dados para gráficos
+  const assetsPieData = stats ? [
+    { name: 'Ativos', value: stats.assets.active, color: '#4caf50' },
+    { name: 'Inativos', value: stats.assets.inactive, color: '#9e9e9e' },
+    { name: 'Manutenção', value: stats.assets.maintenance, color: '#ff9800' }
+  ] : [];
+
+  const maintenanceTrendData = [
+    { month: 'Jan', realizadas: 12, previstas: 15 },
+    { month: 'Fev', realizadas: 19, previstas: 18 },
+    { month: 'Mar', realizadas: 8, previstas: 12 },
+    { month: 'Abr', realizadas: 15, previstas: 20 },
+    { month: 'Mai', realizadas: 7, previstas: 14 }
+  ];
+
+  // Componente para card de estatística
+  const StatCard: React.FC<{
+    title: string;
+    value: number;
+    icon: React.ReactNode;
+    color: string;
+    subtitle?: string;
+    growth?: number;
+  }> = ({ title, value, icon, color, subtitle, growth }) => (
+    <Card
+      sx={{
+        height: '100%',
+        background: `linear-gradient(135deg, ${alpha(color, 0.1)} 0%, ${alpha(color, 0.05)} 100%)`,
+        border: `1px solid ${alpha(color, 0.2)}`,
+        transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          boxShadow: theme.shadows[8]
+        }
+      }}
+    >
+      <CardContent>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <Avatar sx={{ bgcolor: color, mr: 2 }}>
+            {icon}
+          </Avatar>
+          <Box sx={{ flexGrow: 1 }}>
+            <Typography color="text.secondary" gutterBottom variant="body2">
+              {title}
+            </Typography>
+            <Typography variant="h4" component="div" fontWeight="bold">
+              {value}
+            </Typography>
+          </Box>
+          {growth !== undefined && (
+            <Chip
+              label={`${growth > 0 ? '+' : ''}${growth}%`}
+              color={growth > 0 ? 'success' : growth < 0 ? 'error' : 'default'}
+              size="small"
+              icon={<TrendingUp />}
+            />
+          )}
+        </Box>
+        {subtitle && (
+          <Typography variant="body2" color="text.secondary">
+            {subtitle}
+          </Typography>
+        )}
+      </CardContent>
+    </Card>
+  );
+
+  // Componente para item de manutenção
+  const MaintenanceItem: React.FC<{ maintenance: MaintenanceItem }> = ({ maintenance }) => {
+    const getStatusInfo = (status: string, daysUntil: number) => {
+      switch (status) {
+        case 'overdue':
+          return { color: 'error', text: `${Math.abs(daysUntil)} dias atrasada`, icon: <Error /> };
+        case 'today':
+          return { color: 'warning', text: 'Vence hoje', icon: <Warning /> };
+        case 'upcoming':
+          return { color: 'info', text: `${daysUntil} dias restantes`, icon: <Schedule /> };
+        default:
+          return { color: 'default', text: 'Pendente', icon: <Schedule /> };
+      }
+    };
+
+    const statusInfo = getStatusInfo(maintenance.status, maintenance.daysUntil);
+
+    return (
+      <ListItem
+        sx={{
+          border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+          borderRadius: 2,
+          mb: 1,
+          bgcolor: 'background.paper',
+          transition: 'all 0.2s ease-in-out',
+          '&:hover': {
+            bgcolor: alpha(theme.palette.primary.main, 0.04),
+            transform: 'translateX(4px)'
+          }
+        }}
+      >
+        <ListItemAvatar>
+          <Avatar sx={{ bgcolor: `${statusInfo.color}.main` }}>
+            {statusInfo.icon}
+          </Avatar>
+        </ListItemAvatar>
+        <ListItemText
+          primary={
+            <Typography variant="subtitle2" fontWeight="medium">
+              {maintenance.assetName}
+            </Typography>
+          }
+          secondary={
+            <Box>
+              <Typography variant="body2" color="text.secondary">
+                {maintenance.type}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Vencimento: {new Date(maintenance.dueDate).toLocaleDateString('pt-BR')}
+              </Typography>
+            </Box>
+          }
+        />
+        <ListItemSecondaryAction>
+          <Chip
+            label={statusInfo.text}
+            color={statusInfo.color as any}
+            size="small"
+            variant="outlined"
+          />
+        </ListItemSecondaryAction>
+      </ListItem>
+    );
+  };
+
+  if (loading) {
+    return (
+      <Box>
+        <Typography variant="h4" component="h1" fontWeight="bold" sx={{ mb: 3 }}>
+          {t('dashboard.title')}
+        </Typography>
+
+        <Grid container spacing={3}>
+          {[1, 2, 3, 4].map((i) => (
+            <Grid item xs={12} sm={6} md={3} key={i}>
+              <Card>
+                <CardContent>
+                  <Skeleton variant="circular" width={40} height={40} sx={{ mb: 2 }} />
+                  <Skeleton variant="text" width="60%" height={24} />
+                  <Skeleton variant="text" width="40%" height={32} />
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
+    );
+  }
+
+  return (
+    <Box>
+      {/* Header */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Box>
+          <Typography variant="h4" component="h1" fontWeight="bold">
+            {t('dashboard.title')}
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+            Bem-vindo de volta! Aqui está um resumo dos seus ativos e manutenções.
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            variant="outlined"
+            startIcon={<Assessment />}
+            onClick={() => navigate('/maintenance')}
+          >
+            Ver Manutenções
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => navigate('/assets')}
+          >
+            Adicionar Ativo
+          </Button>
+        </Box>
+      </Box>
+
+      {/* Error Alert */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
+          {error}
+        </Alert>
+      )}
+
+      {/* Stats Cards */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Total de Ativos"
+            value={stats?.assets.total || 0}
+            icon={<DirectionsCar />}
+            color={theme.palette.primary.main}
+            subtitle="Equipamentos cadastrados"
+            growth={12}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Ativos Ativos"
+            value={stats?.assets.active || 0}
+            icon={<CheckCircle />}
+            color={theme.palette.success.main}
+            subtitle="Em operação normal"
+            growth={5}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Manutenções Próximas"
+            value={stats?.maintenances.upcoming || 0}
+            icon={<Schedule />}
+            color={theme.palette.warning.main}
+            subtitle="Próximos 7 dias"
+            growth={-8}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Manutenções Atrasadas"
+            value={stats?.maintenances.overdue || 0}
+            icon={<Error />}
+            color={theme.palette.error.main}
+            subtitle="Requer atenção imediata"
+          />
+        </Grid>
+      </Grid>
+
+      {/* Main Content Grid */}
+      <Grid container spacing={3}>
+        {/* Próximas Manutenções */}
+        <Grid item xs={12} md={8}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', justifyContent: 'between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6" component="h2" fontWeight="bold">
+                  Próximas Manutenções
+                </Typography>
+                <Chip
+                  label={`${upcomingMaintenances.length} pendentes`}
+                  color="primary"
+                  size="small"
+                />
+              </Box>
+
+              {upcomingMaintenances.length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <CheckCircle sx={{ fontSize: 48, color: 'success.main', mb: 2 }} />
+                  <Typography variant="h6" color="text.secondary">
+                    Todas as manutenções estão em dia!
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Nenhuma manutenção programada para os próximos dias.
+                  </Typography>
+                </Box>
+              ) : (
+                <List sx={{ maxHeight: 400, overflow: 'auto' }}>
+                  {upcomingMaintenances.map((maintenance) => (
+                    <MaintenanceItem key={maintenance.id} maintenance={maintenance} />
+                  ))}
+                </List>
+              )}
+
+              <Box sx={{ mt: 2, textAlign: 'center' }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => navigate('/maintenance')}
+                  startIcon={<Build />}
+                >
+                  Ver Todas as Manutenções
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Gráfico de Distribuição de Ativos */}
+        <Grid item xs={12} md={4}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Typography variant="h6" component="h2" fontWeight="bold" sx={{ mb: 2 }}>
+                Distribuição de Ativos
+              </Typography>
+
+              {stats?.assets.total === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <DirectionsCar sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                  <Typography variant="body2" color="text.secondary">
+                    Nenhum ativo cadastrado ainda
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    sx={{ mt: 2 }}
+                    onClick={() => navigate('/assets')}
+                  >
+                    Adicionar Primeiro Ativo
+                  </Button>
+                </Box>
+              ) : (
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie
+                      data={assetsPieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {assetsPieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+
+              {/* Stats Summary */}
+              {stats && stats.assets.total > 0 && (
+                <Box sx={{ mt: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2" color="text.secondary">Ativos</Typography>
+                    <Typography variant="body2" fontWeight="medium">{stats.assets.active}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2" color="text.secondary">Inativos</Typography>
+                    <Typography variant="body2" fontWeight="medium">{stats.assets.inactive}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2" color="text.secondary">Em Manutenção</Typography>
+                    <Typography variant="body2" fontWeight="medium">{stats.assets.maintenance}</Typography>
+                  </Box>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Gráfico de Tendência de Manutenções */}
+        <Grid item xs={12}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" component="h2" fontWeight="bold" sx={{ mb: 2 }}>
+                Tendência de Manutenções
+              </Typography>
+
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={maintenanceTrendData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line
+                    type="monotone"
+                    dataKey="realizadas"
+                    stroke={theme.palette.primary.main}
+                    strokeWidth={3}
+                    name="Realizadas"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="previstas"
+                    stroke={theme.palette.secondary.main}
+                    strokeWidth={3}
+                    strokeDasharray="5 5"
+                    name="Previstas"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+
+              <Box sx={{ mt: 2, textAlign: 'center' }}>
+                <Typography variant="body2" color="text.secondary">
+                  Acompanhe o desempenho das suas manutenções ao longo do tempo
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Floating Action Button */}
+      <Fab
+        color="primary"
+        aria-label="add"
+        sx={{
+          position: 'fixed',
+          bottom: 16,
+          right: 16,
+        }}
+        onClick={() => navigate('/assets')}
+      >
+        <Add />
+      </Fab>
+    </Box>
+  );
+};
+
+export default Dashboard;
+</file>
+
+<file path="src/pages/ForgotPassword.tsx">
+// frontend/src/pages/ForgotPassword.tsx
+import React, { useState } from 'react';
+import {
+  Box,
+  Paper,
+  TextField,
+  Button,
+  Typography,
+  Link,
+  Alert,
+  Container
+} from '@mui/material';
+import { useTranslation } from 'react-i18next';
+import { Link as RouterLink } from 'react-router-dom';
+import { authService } from '../services/api';
+
+const ForgotPassword: React.FC = () => {
+  const { t } = useTranslation();
+
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(event.target.value);
+    if (error) setError('');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!email) {
+      setError('Por favor, informe seu e-mail');
+      return;
+    }
+
+    if (!email.includes('@')) {
+      setError('Por favor, informe um e-mail válido');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError('');
+
+      await authService.forgotPassword(email);
+      setSuccess(true);
+    } catch (error: any) {
+      console.error('Erro ao solicitar recuperação:', error);
+      const message = error.response?.data?.message || 'Erro ao enviar e-mail de recuperação';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <Container component="main" maxWidth="sm">
+        <Box
+          sx={{
+            minHeight: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <Paper elevation={3} sx={{ padding: 4, width: '100%' }}>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography component="h1" variant="h4" fontWeight="bold" sx={{ mb: 2 }}>
+                E-mail enviado!
+              </Typography>
+
+              <Alert severity="success" sx={{ mb: 3 }}>
+                Instruções para recuperar sua senha foram enviadas para <strong>{email}</strong>
+              </Alert>
+
+              <Typography variant="body1" sx={{ mb: 3 }}>
+                Verifique sua caixa de entrada e spam. O link de recuperação expira em 1 hora.
+              </Typography>
+
+              <Button
+                component={RouterLink}
+                to="/login"
+                variant="contained"
+                size="large"
+                fullWidth
+              >
+                Voltar ao Login
+              </Button>
+            </Box>
+          </Paper>
+        </Box>
+      </Container>
+    );
+  }
+
+  return (
+    <Container component="main" maxWidth="sm">
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <Paper elevation={3} sx={{ padding: 4, width: '100%' }}>
+          <Box sx={{ textAlign: 'center', mb: 3 }}>
+            <Typography component="h1" variant="h4" fontWeight="bold">
+              {t('auth.forgotPassword')}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              Informe seu e-mail para receber instruções de recuperação
+            </Typography>
+          </Box>
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          <Box component="form" onSubmit={handleSubmit}>
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="email"
+              label={t('auth.email')}
+              name="email"
+              autoComplete="email"
+              autoFocus
+              value={email}
+              onChange={handleChange}
+              disabled={loading}
+              placeholder="seu@email.com"
+            />
+
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3, mb: 2 }}
+              disabled={loading || !email}
+              size="large"
+            >
+              {loading ? t('common.loading') : 'Enviar instruções'}
+            </Button>
+
+            <Box sx={{ textAlign: 'center', mt: 2 }}>
+              <Typography variant="body2">
+                Lembrou da senha?{' '}
+                <Link component={RouterLink} to="/login">
+                  {t('auth.login')}
+                </Link>
+              </Typography>
+            </Box>
+
+            <Box sx={{ textAlign: 'center', mt: 1 }}>
+              <Typography variant="body2">
+                Não tem conta?{' '}
+                <Link component={RouterLink} to="/register">
+                  {t('auth.register')}
+                </Link>
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+      </Box>
+    </Container>
+  );
+};
+
+export default ForgotPassword;
+</file>
+
+<file path="src/pages/Login.tsx">
+// frontend/src/pages/Login.tsx
+import React, { useState } from 'react';
+import {
+  Box,
+  Paper,
+  TextField,
+  Button,
+  Typography,
+  Link,
+  Alert,
+  Container
+} from '@mui/material';
+import { useTranslation } from 'react-i18next';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { authService } from '../services/api';
+
+const Login: React.FC = () => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleChange = (field: 'email' | 'password') => (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: event.target.value
+    }));
+    if (error) setError(''); // Limpar erro quando usuário começar a digitar
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.email || !formData.password) {
+      setError('Por favor, preencha todos os campos');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError('');
+
+      const response = await authService.login(formData.email, formData.password);
+
+      // Salvar dados no localStorage
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+
+      // Redirecionar para dashboard
+      navigate('/');
+    } catch (error: any) {
+      console.error('Erro no login:', error);
+      const message = error.response?.data?.message || 'Erro ao fazer login';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Container component="main" maxWidth="sm">
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <Paper elevation={3} sx={{ padding: 4, width: '100%' }}>
+          <Box sx={{ textAlign: 'center', mb: 3 }}>
+            <Typography component="h1" variant="h4" fontWeight="bold">
+              {t('auth.login')}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              {t('app.title')}
+            </Typography>
+          </Box>
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          <Box component="form" onSubmit={handleSubmit}>
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="email"
+              label={t('auth.email')}
+              name="email"
+              autoComplete="email"
+              autoFocus
+              value={formData.email}
+              onChange={handleChange('email')}
+              disabled={loading}
+            />
+
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="password"
+              label={t('auth.password')}
+              type="password"
+              id="password"
+              autoComplete="current-password"
+              value={formData.password}
+              onChange={handleChange('password')}
+              disabled={loading}
+            />
+
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3, mb: 2 }}
+              disabled={loading}
+              size="large"
+            >
+              {loading ? t('common.loading') : t('auth.login')}
+            </Button>
+
+            <Box sx={{ textAlign: 'center', mt: 2 }}>
+              <Link component={RouterLink} to="/forgot-password" variant="body2">
+                {t('auth.forgotPassword')}
+              </Link>
+            </Box>
+
+            <Box sx={{ textAlign: 'center', mt: 2 }}>
+              <Typography variant="body2">
+                {t('auth.noAccount')}{' '}
+                <Link component={RouterLink} to="/register">
+                  {t('auth.register')}
+                </Link>
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+      </Box>
+    </Container>
+  );
+};
+
+export default Login;
+</file>
+
+<file path="src/pages/Register.tsx">
+// frontend/src/pages/Register.tsx
+import React, { useState } from 'react';
+import {
+  Box,
+  Paper,
+  TextField,
+  Button,
+  Typography,
+  Link,
+  Alert,
+  Container
+} from '@mui/material';
+import { useTranslation } from 'react-i18next';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { authService } from '../services/api';
+
+const Register: React.FC = () => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleChange = (field: keyof typeof formData) => (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: event.target.value
+    }));
+    if (error) setError('');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validações
+    if (!formData.name || !formData.email || !formData.password) {
+      setError('Por favor, preencha todos os campos');
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('As senhas não coincidem');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError('');
+
+      const response = await authService.register(
+        formData.name,
+        formData.email,
+        formData.password
+      );
+
+      // Salvar dados no localStorage
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+
+      // Redirecionar para dashboard
+      navigate('/');
+    } catch (error: any) {
+      console.error('Erro no cadastro:', error);
+      const message = error.response?.data?.message || 'Erro ao fazer cadastro';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Container component="main" maxWidth="sm">
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <Paper elevation={3} sx={{ padding: 4, width: '100%' }}>
+          <Box sx={{ textAlign: 'center', mb: 3 }}>
+            <Typography component="h1" variant="h4" fontWeight="bold">
+              {t('auth.register')}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              Criar nova conta
+            </Typography>
+          </Box>
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          <Box component="form" onSubmit={handleSubmit}>
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="name"
+              label={t('auth.name')}
+              name="name"
+              autoComplete="name"
+              autoFocus
+              value={formData.name}
+              onChange={handleChange('name')}
+              disabled={loading}
+            />
+
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="email"
+              label={t('auth.email')}
+              name="email"
+              autoComplete="email"
+              value={formData.email}
+              onChange={handleChange('email')}
+              disabled={loading}
+            />
+
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="password"
+              label={t('auth.password')}
+              type="password"
+              id="password"
+              autoComplete="new-password"
+              value={formData.password}
+              onChange={handleChange('password')}
+              disabled={loading}
+            />
+
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="confirmPassword"
+              label={t('auth.confirmPassword')}
+              type="password"
+              id="confirmPassword"
+              autoComplete="new-password"
+              value={formData.confirmPassword}
+              onChange={handleChange('confirmPassword')}
+              disabled={loading}
+            />
+
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3, mb: 2 }}
+              disabled={loading}
+              size="large"
+            >
+              {loading ? t('common.loading') : t('auth.register')}
+            </Button>
+
+            <Box sx={{ textAlign: 'center', mt: 2 }}>
+              <Typography variant="body2">
+                {t('auth.hasAccount')}{' '}
+                <Link component={RouterLink} to="/login">
+                  {t('auth.login')}
+                </Link>
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+      </Box>
+    </Container>
+  );
+};
+
+export default Register;
+</file>
+
+<file path="src/pages/ResetPassword.tsx">
+// frontend/src/pages/ResetPassword.tsx
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Paper,
+  TextField,
+  Button,
+  Typography,
+  Link,
+  Alert,
+  Container
+} from '@mui/material';
+import { useTranslation } from 'react-i18next';
+import { Link as RouterLink, useParams, useNavigate } from 'react-router-dom';
+import { authService } from '../services/api';
+
+const ResetPassword: React.FC = () => {
+  const { t } = useTranslation();
+  const { token } = useParams<{ token: string }>();
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
+    password: '',
+    confirmPassword: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  // Verificar se tem token
+  useEffect(() => {
+    if (!token) {
+      setError('Token de recuperação inválido');
+    }
+  }, [token]);
+
+  const handleChange = (field: 'password' | 'confirmPassword') => (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: event.target.value
+    }));
+    if (error) setError('');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!token) {
+      setError('Token de recuperação inválido');
+      return;
+    }
+
+    if (!formData.password || !formData.confirmPassword) {
+      setError('Por favor, preencha todos os campos');
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('As senhas não coincidem');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError('');
+
+      await authService.resetPassword(token, formData.password);
+      setSuccess(true);
+
+      // Redirecionar para login após 3 segundos
+      setTimeout(() => {
+        navigate('/login');
+      }, 3000);
+    } catch (error: any) {
+      console.error('Erro ao redefinir senha:', error);
+      const message = error.response?.data?.message || 'Erro ao redefinir senha';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <Container component="main" maxWidth="sm">
+        <Box
+          sx={{
+            minHeight: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <Paper elevation={3} sx={{ padding: 4, width: '100%' }}>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography component="h1" variant="h4" fontWeight="bold" sx={{ mb: 2 }}>
+                Senha redefinida!
+              </Typography>
+
+              <Alert severity="success" sx={{ mb: 3 }}>
+                Sua senha foi alterada com sucesso.
+              </Alert>
+
+              <Typography variant="body1" sx={{ mb: 3 }}>
+                Você será redirecionado para o login em alguns segundos...
+              </Typography>
+
+              <Button
+                component={RouterLink}
+                to="/login"
+                variant="contained"
+                size="large"
+                fullWidth
+              >
+                Ir para Login
+              </Button>
+            </Box>
+          </Paper>
+        </Box>
+      </Container>
+    );
+  }
+
+  return (
+    <Container component="main" maxWidth="sm">
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <Paper elevation={3} sx={{ padding: 4, width: '100%' }}>
+          <Box sx={{ textAlign: 'center', mb: 3 }}>
+            <Typography component="h1" variant="h4" fontWeight="bold">
+              {t('auth.resetPassword')}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              Digite sua nova senha
+            </Typography>
+          </Box>
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          <Box component="form" onSubmit={handleSubmit}>
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="password"
+              label="Nova senha"
+              type="password"
+              id="password"
+              autoComplete="new-password"
+              autoFocus
+              value={formData.password}
+              onChange={handleChange('password')}
+              disabled={loading}
+            />
+
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="confirmPassword"
+              label="Confirmar nova senha"
+              type="password"
+              id="confirmPassword"
+              autoComplete="new-password"
+              value={formData.confirmPassword}
+              onChange={handleChange('confirmPassword')}
+              disabled={loading}
+            />
+
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3, mb: 2 }}
+              disabled={loading || !formData.password || !formData.confirmPassword}
+              size="large"
+            >
+              {loading ? t('common.loading') : 'Redefinir senha'}
+            </Button>
+
+            <Box sx={{ textAlign: 'center', mt: 2 }}>
+              <Typography variant="body2">
+                Lembrou da senha?{' '}
+                <Link component={RouterLink} to="/login">
+                  {t('auth.login')}
+                </Link>
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+      </Box>
+    </Container>
+  );
+};
+
+export default ResetPassword;
+</file>
+
+<file path="src/services/api.ts">
+import axios from 'axios';
+import type {
+  AuthResponse,
+  AssetsResponse,
+  AssetResponse,
+  StatsResponse,
+  CreateAssetData,
+  UpdateAssetData
+} from '../types';
+
+// Configurar URL base da API
+// frontend/src/services/api.ts
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 // Criar instância do axios
 const api = axios.create({

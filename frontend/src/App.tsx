@@ -1,3 +1,4 @@
+// frontend/src/App.tsx
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useContext } from 'react';
 import { AppContext } from './context/AppContext';
@@ -10,6 +11,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 
 // Páginas protegidas
+import Dashboard from './pages/Dashboard';
 import Assets from './pages/Assets';
 
 // Componente de layout protegido
@@ -44,7 +46,7 @@ function App() {
 
           {/* Rotas protegidas */}
           <Route path="/" element={<ProtectedLayout />}>
-            <Route index element={<ComingSoon pageName="Dashboard" />} />
+            <Route index element={<Dashboard />} />
             <Route path="assets" element={<Assets />} />
             <Route path="assets/:id" element={<ComingSoon pageName="Detalhes do Ativo" />} />
             <Route path="maintenance" element={<ComingSoon pageName="Manutenções" />} />
