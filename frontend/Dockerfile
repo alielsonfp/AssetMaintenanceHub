@@ -1,5 +1,4 @@
-
-FROM node:16-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
@@ -11,8 +10,6 @@ COPY . .
 
 RUN npm run build
 
-# Se você estiver usando React ou outro framework com um servidor de desenvolvimento
 EXPOSE 3000
 
-# Para aplicativos React
-CMD ["npm", "start"]
+CMD ["npm", "run", "preview"]

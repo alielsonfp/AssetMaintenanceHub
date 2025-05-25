@@ -1,7 +1,10 @@
-import React, { createContext, useState, useEffect, useMemo, ReactNode } from 'react';
-import { ThemeProvider, PaletteMode } from '@mui/material';
+import React, { createContext, useState, useEffect, useMemo } from 'react';
+import type { ReactNode } from 'react';
+import { ThemeProvider } from '@mui/material';
+import type { PaletteMode } from '@mui/material';
 import { getTheme } from '../theme';
 import { useTranslation } from 'react-i18next';
+
 
 interface AppContextType {
   themeMode: PaletteMode;
