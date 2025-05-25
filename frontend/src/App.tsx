@@ -3,9 +3,13 @@ import { useContext } from 'react';
 import { AppContext } from './context/AppContext';
 import { Box } from '@mui/material';
 
-// Páginas que existem
+// Páginas de autenticação
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+
+// Páginas protegidas
 import Assets from './pages/Assets';
 
 // Componente de layout protegido
@@ -32,11 +36,11 @@ function App() {
     >
       <Router>
         <Routes>
-          {/* Rotas públicas */}
+          {/* Rotas públicas de autenticação */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ComingSoon pageName="Esqueci a Senha" />} />
-          <Route path="/reset-password/:token" element={<ComingSoon pageName="Redefinir Senha" />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
 
           {/* Rotas protegidas */}
           <Route path="/" element={<ProtectedLayout />}>
