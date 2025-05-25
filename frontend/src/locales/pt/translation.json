@@ -71,7 +71,28 @@
       "completed": "Concluída",
       "overdue": "Atrasada"
     },
-    "noRecords": "Nenhuma manutenção registrada"
+    "noRecords": "Nenhuma manutenção registrada",
+    "types": {
+      "title": "Tipos de Manutenção",
+      "add": "Adicionar Tipo",
+      "edit": "Editar Tipo",
+      "delete": "Remover Tipo",
+      "name": "Nome",
+      "description": "Descrição",
+      "isDefault": "Tipo Padrão"
+    },
+    "records": {
+      "title": "Registros de Manutenção",
+      "add": "Registrar Manutenção",
+      "edit": "Editar Registro",
+      "delete": "Remover Registro"
+    },
+    "schedules": {
+      "title": "Agendamentos",
+      "add": "Novo Agendamento",
+      "edit": "Editar Agendamento",
+      "delete": "Remover Agendamento"
+    }
   },
   "common": {
     "save": "Salvar",

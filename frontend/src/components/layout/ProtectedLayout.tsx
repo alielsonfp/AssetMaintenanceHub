@@ -1,14 +1,16 @@
+// frontend/src/components/layout/ProtectedLayout.tsx
 import { useState, useContext } from 'react';
 import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   AppBar, Box, Drawer, IconButton, Toolbar, Typography,
   List, ListItem, ListItemIcon, ListItemText, Divider,
-  Menu, MenuItem, Button, useMediaQuery, useTheme
+  Menu, MenuItem, Button, useMediaQuery, useTheme, Collapse
 } from '@mui/material';
 import {
   Menu as MenuIcon, Dashboard, DirectionsCar, Build,
-  Brightness4, Brightness7, Language, Logout
+  Brightness4, Brightness7, Language, Logout, Settings,
+  Schedule, Assignment, ExpandLess, ExpandMore
 } from '@mui/icons-material';
 import { AppContext } from '../../context/AppContext';
 
@@ -21,6 +23,7 @@ const ProtectedLayout = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
   const [languageMenu, setLanguageMenu] = useState<null | HTMLElement>(null);
+  const [maintenanceOpen, setMaintenanceOpen] = useState(true);
   const location = useLocation();
 
   // Verificar se o usuário está autenticado
@@ -56,8 +59,23 @@ const ProtectedLayout = () => {
   const menuItems = [
     { text: t('dashboard.title'), icon: <Dashboard />, path: '/' },
     { text: t('assets.title'), icon: <DirectionsCar />, path: '/assets' },
-    { text: t('maintenance.title'), icon: <Build />, path: '/maintenance' },
   ];
+
+  const maintenanceItems = [
+    { text: 'Tipos de Manutenção', icon: <Settings />, path: '/maintenance-types' },
+    { text: 'Registros', icon: <Assignment />, path: '/maintenance-records' },
+    { text: 'Agendamentos', icon: <Schedule />, path: '/maintenance-schedules' },
+  ];
+
+  const getPageTitle = (pathname: string) => {
+    const item = menuItems.find(item => item.path === pathname);
+    if (item) return item.text;
+
+    const maintenanceItem = maintenanceItems.find(item => item.path === pathname);
+    if (maintenanceItem) return maintenanceItem.text;
+
+    return t('app.title');
+  };
 
   const drawer = (
     <>
@@ -82,6 +100,34 @@ const ProtectedLayout = () => {
             <ListItemText primary={item.text} />
           </ListItem>
         ))}
+
+        {/* Menu de Manutenção */}
+        <ListItem button onClick={() => setMaintenanceOpen(!maintenanceOpen)}>
+          <ListItemIcon>
+            <Build />
+          </ListItemIcon>
+          <ListItemText primary={t('maintenance.title')} />
+          {maintenanceOpen ? <ExpandLess /> : <ExpandMore />}
+        </ListItem>
+        <Collapse in={maintenanceOpen} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            {maintenanceItems.map((item) => (
+              <ListItem
+                button
+                key={item.text}
+                sx={{ pl: 4 }}
+                onClick={() => {
+                  window.location.href = item.path;
+                  if (isMobile) handleDrawerToggle();
+                }}
+                selected={location.pathname === item.path}
+              >
+                <ListItemIcon>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.text} />
+              </ListItem>
+            ))}
+          </List>
+        </Collapse>
       </List>
     </>
   );
@@ -106,7 +152,7 @@ const ProtectedLayout = () => {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            {menuItems.find(item => item.path === location.pathname)?.text || t('app.title')}
+            {getPageTitle(location.pathname)}
           </Typography>
 
           {/* Botão de alternância de tema */}

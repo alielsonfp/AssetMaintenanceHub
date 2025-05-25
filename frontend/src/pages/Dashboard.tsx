@@ -257,21 +257,25 @@ const Dashboard: React.FC = () => {
           </Avatar>
         </ListItemAvatar>
         <ListItemText
-          primary={
-            <Typography variant="subtitle2" fontWeight="medium">
-              {maintenance.assetName}
-            </Typography>
-          }
+          primary={maintenance.assetName}
           secondary={
-            <Box>
-              <Typography variant="body2" color="text.secondary">
-                {maintenance.type}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
+            <>
+              {maintenance.type}
+              <br />
+              <Typography component="span" variant="caption" color="text.secondary">
                 Vencimento: {new Date(maintenance.dueDate).toLocaleDateString('pt-BR')}
               </Typography>
-            </Box>
+            </>
           }
+          primaryTypographyProps={{
+            variant: 'subtitle2',
+            fontWeight: 'medium'
+          }}
+          secondaryTypographyProps={{
+            variant: 'body2',
+            color: 'text.secondary',
+            component: 'span'
+          }}
         />
         <ListItemSecondaryAction>
           <Chip
