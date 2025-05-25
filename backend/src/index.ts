@@ -4,6 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes';
 import assetRoutes from './routes/assetRoutes';
+import maintenanceTypeRoutes from './routes/maintenanceTypeRoutes';
 import db from './config/db';
 
 dotenv.config();
@@ -18,6 +19,7 @@ app.use(express.json());
 // Rotas
 app.use('/api/auth', authRoutes);
 app.use('/api/assets', assetRoutes);
+app.use('/api/maintenance-types', maintenanceTypeRoutes);
 
 // Rota de teste
 app.get('/', (req, res) => {
@@ -78,6 +80,7 @@ async function startServer() {
       console.log(`📍 APIs disponíveis:`);
       console.log(`   - Auth: http://localhost:${port}/api/auth`);
       console.log(`   - Assets: http://localhost:${port}/api/assets`);
+      console.log(`   - Maintenance Types: http://localhost:${port}/api/maintenance-types`);
     });
   } catch (error) {
     console.error('❌ Erro ao iniciar o servidor:', error);
