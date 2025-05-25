@@ -6,6 +6,7 @@ import authRoutes from './routes/authRoutes';
 import assetRoutes from './routes/assetRoutes';
 import maintenanceTypeRoutes from './routes/maintenanceTypeRoutes';
 import maintenanceRecordRoutes from './routes/maintenanceRecordRoutes';
+import maintenanceScheduleRoutes from './routes/maintenanceScheduleRoutes';
 import db from './config/db';
 
 dotenv.config();
@@ -22,6 +23,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/assets', assetRoutes);
 app.use('/api/maintenance-types', maintenanceTypeRoutes);
 app.use('/api/maintenance-records', maintenanceRecordRoutes);
+app.use('/api/maintenance-schedules', maintenanceScheduleRoutes);
 
 // Rota de teste
 app.get('/', (req, res) => {
@@ -84,6 +86,7 @@ async function startServer() {
       console.log(`   - Assets: http://localhost:${port}/api/assets`);
       console.log(`   - Maintenance Types: http://localhost:${port}/api/maintenance-types`);
       console.log(`   - Maintenance Records: http://localhost:${port}/api/maintenance-records`);
+      console.log(`   - Maintenance Schedules: http://localhost:${port}/api/maintenance-schedules`);
     });
   } catch (error) {
     console.error('❌ Erro ao iniciar o servidor:', error);

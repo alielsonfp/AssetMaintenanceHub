@@ -1,6 +1,7 @@
 // backend/src/controllers/maintenanceRecordController.ts
 import { Request, Response } from 'express';
 import maintenanceRecordModel, { CreateMaintenanceRecordData, UpdateMaintenanceRecordData } from '../models/maintenanceRecordModel';
+import maintenanceScheduleModel from '../models/maintenanceScheduleModel';
 
 const maintenanceRecordController = {
   async getAll(req: Request, res: Response): Promise<Response> {
@@ -113,6 +114,30 @@ const maintenanceRecordController = {
       };
 
       const maintenanceRecord = await maintenanceRecordModel.create(userId, data);
+
+      // **AUTOMAÇÃO: Verificar se existe agendamento pendente para este ativo/tipo**
+      if (data.maintenance_type_id) {
+        try {
+          const assetSchedules = await maintenanceScheduleModel.findByAssetId(data.asset_id, userId);
+          const pendingSchedule = assetSchedules.find(
+            schedule => schedule.maintenance_type_id === data.maintenance_type_id &&
+              schedule.status === 'pending'
+          );
+
+          if (pendingSchedule) {
+            // Marcar como completo e criar próximo agendamento
+            await maintenanceScheduleModel.markAsCompleted(
+              pendingSchedule.id!,
+              userId,
+              maintenanceRecord.id!
+            );
+            console.log(`✅ Agendamento ${pendingSchedule.id} marcado como completo e próximo criado automaticamente`);
+          }
+        } catch (scheduleError) {
+          console.error('Erro ao processar agendamento automático:', scheduleError);
+          // Não falha a criação do registro se houver erro no agendamento
+        }
+      }
 
       return res.status(201).json({
         message: 'Registro de manutenção criado com sucesso',
