@@ -26,10 +26,37 @@
   },
   "dashboard": {
     "title": "Panel Principal",
+    "welcome": "¡Bienvenido de vuelta! Aquí tienes un resumen de tus activos y mantenimientos.",
     "upcomingMaintenance": "Mantenimientos Próximos",
     "overdueMaintenance": "Mantenimientos Atrasados",
     "assetCount": "Total de Activos",
-    "maintenanceCount": "Total de Mantenimientos"
+    "maintenanceCount": "Total de Mantenimientos",
+    "activeAssets": "Activos Activos",
+    "equipmentRegistered": "Equipos registrados",
+    "normalOperation": "En operación normal",
+    "next7Days": "Próximos 7 días",
+    "requiresAttention": "Requiere atención inmediata",
+    "upcomingMaintenances": "Próximos Mantenimientos",
+    "pendingCount": "pendientes",
+    "allUpToDate": "¡Todos los mantenimientos están al día!",
+    "noScheduledMaintenance": "No hay mantenimientos programados para los próximos días.",
+    "seeAllMaintenances": "Ver Todos los Mantenimientos",
+    "assetDistribution": "Distribución de Activos",
+    "noAssetsYet": "Ningún activo registrado aún",
+    "addFirstAsset": "Agregar Primer Activo",
+    "maintenanceTrend": "Tendencia de Mantenimientos",
+    "trackPerformance": "Rastrea el rendimiento de tus mantenimientos a lo largo del tiempo",
+    "performed": "Realizados",
+    "scheduled": "Programados",
+    "seeMaintenances": "Ver Mantenimientos",
+    "addAsset": "Agregar Activo",
+    "daysOverdue": "días atrasado",
+    "dueToday": "Vence hoy",
+    "daysRemaining": "días restantes",
+    "completed": "Completado",
+    "pending": "Pendiente",
+    "dueDate": "Fecha de vencimiento",
+    "generalMaintenance": "Mantenimiento general"
   },
   "assets": {
     "title": "Mis Activos",
@@ -71,7 +98,28 @@
       "completed": "Completado",
       "overdue": "Atrasado"
     },
-    "noRecords": "No hay registros de mantenimiento"
+    "noRecords": "No hay registros de mantenimiento",
+    "types": {
+      "title": "Tipos de Mantenimiento",
+      "add": "Agregar Tipo",
+      "edit": "Editar Tipo",
+      "delete": "Eliminar Tipo",
+      "name": "Nombre",
+      "description": "Descripción",
+      "isDefault": "Tipo Predeterminado"
+    },
+    "records": {
+      "title": "Registros de Mantenimiento",
+      "add": "Registrar Mantenimiento",
+      "edit": "Editar Registro",
+      "delete": "Eliminar Registro"
+    },
+    "schedules": {
+      "title": "Programaciones",
+      "add": "Nueva Programación",
+      "edit": "Editar Programación",
+      "delete": "Eliminar Programación"
+    }
   },
   "common": {
     "save": "Guardar",

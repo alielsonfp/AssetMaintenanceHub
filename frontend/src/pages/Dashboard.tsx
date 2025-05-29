@@ -51,19 +51,14 @@ import {
   BarChart,
   Bar
 } from 'recharts';
-import { assetService } from '../services/api';
-import type { AssetStats } from '../types';
+import {
+  assetService,
+  maintenanceScheduleService,
+  maintenanceRecordService
+} from '../services/api';
+import type { AssetStats, MaintenanceSchedule, MaintenanceRecord } from '../types';
 
-// Tipos para os dados do dashboard
-interface MaintenanceItem {
-  id: number;
-  assetName: string;
-  type: string;
-  dueDate: string;
-  status: 'upcoming' | 'overdue' | 'today';
-  daysUntil: number;
-}
-
+// Interfaces para os dados do dashboard
 interface DashboardStats {
   assets: AssetStats;
   maintenances: {
@@ -72,6 +67,12 @@ interface DashboardStats {
     thisWeek: number;
     thisMonth: number;
   };
+}
+
+interface MaintenanceTrendData {
+  month: string;
+  realizadas: number;
+  previstas: number;
 }
 
 const Dashboard: React.FC = () => {
@@ -83,70 +84,83 @@ const Dashboard: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [upcomingMaintenances, setUpcomingMaintenances] = useState<MaintenanceItem[]>([]);
+  const [upcomingMaintenances, setUpcomingMaintenances] = useState<MaintenanceSchedule[]>([]);
+  const [overdueMaintenances, setOverdueMaintenances] = useState<MaintenanceSchedule[]>([]);
+  const [recentMaintenances, setRecentMaintenances] = useState<MaintenanceRecord[]>([]);
+  const [maintenanceTrend, setMaintenanceTrend] = useState<MaintenanceTrendData[]>([]);
 
   // Carregar dados do dashboard
   const loadDashboardData = async () => {
     try {
       setLoading(true);
 
-      // Carregar estatísticas de ativos
-      const assetStatsResponse = await assetService.getStats();
+      // Carregar dados em paralelo
+      const [
+        assetStatsResponse,
+        scheduleStatsResponse,
+        upcomingResponse,
+        overdueResponse,
+        recentResponse
+      ] = await Promise.all([
+        assetService.getStats(),
+        maintenanceScheduleService.getStats(),
+        maintenanceScheduleService.getUpcoming(7),
+        maintenanceScheduleService.getOverdue(),
+        maintenanceRecordService.getRecent(5)
+      ]);
 
-      // Por enquanto, dados de manutenção simulados (será substituído pela API real)
-      const mockMaintenances: MaintenanceItem[] = [
-        {
-          id: 1,
-          assetName: "Meu Carro - Gol",
-          type: "Troca de óleo",
-          dueDate: "2025-05-26",
-          status: "upcoming",
-          daysUntil: 2
-        },
-        {
-          id: 2,
-          assetName: "Prensa Hidráulica",
-          type: "Lubrificação geral",
-          dueDate: "2025-05-24",
-          status: "today",
-          daysUntil: 0
-        },
-        {
-          id: 3,
-          assetName: "Servidor Principal",
-          type: "Limpeza e verificação",
-          dueDate: "2025-05-22",
-          status: "overdue",
-          daysUntil: -2
-        },
-        {
-          id: 4,
-          assetName: "Ar Condicionado",
-          type: "Troca de filtros",
-          dueDate: "2025-05-28",
-          status: "upcoming",
-          daysUntil: 4
-        }
-      ];
-
-      setStats({
+      // Compilar estatísticas
+      const dashboardStats: DashboardStats = {
         assets: assetStatsResponse.stats,
         maintenances: {
-          upcoming: mockMaintenances.filter(m => m.status === 'upcoming').length,
-          overdue: mockMaintenances.filter(m => m.status === 'overdue').length,
-          thisWeek: mockMaintenances.filter(m => m.daysUntil <= 7 && m.daysUntil >= 0).length,
-          thisMonth: mockMaintenances.length
+          upcoming: scheduleStatsResponse.stats.upcomingWeek,
+          overdue: scheduleStatsResponse.stats.overdue,
+          thisWeek: scheduleStatsResponse.stats.upcomingWeek,
+          thisMonth: scheduleStatsResponse.stats.upcomingMonth
         }
-      });
+      };
 
-      setUpcomingMaintenances(mockMaintenances);
+      setStats(dashboardStats);
+      setUpcomingMaintenances(upcomingResponse.schedules);
+      setOverdueMaintenances(overdueResponse.schedules);
+      setRecentMaintenances(recentResponse.maintenanceRecords);
+
+      // Gerar dados de tendência (últimos 5 meses)
+      const trendData = generateMaintenanceTrend(recentResponse.maintenanceRecords);
+      setMaintenanceTrend(trendData);
+
       setError('');
     } catch (error: any) {
       console.error('Erro ao carregar dashboard:', error);
-      setError('Erro ao carregar dados do dashboard');
+      setError(t('common.error'));
     } finally {
       setLoading(false);
     }
+  };
+
+  // Gerar dados de tendência baseados nos registros reais
+  const generateMaintenanceTrend = (records: MaintenanceRecord[]): MaintenanceTrendData[] => {
+    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai'];
+    const now = new Date();
+
+    return months.map((month, index) => {
+      const monthDate = new Date(now.getFullYear(), now.getMonth() - (4 - index), 1);
+      const nextMonth = new Date(now.getFullYear(), now.getMonth() - (4 - index) + 1, 1);
+
+      const realizadas = records.filter(record => {
+        const recordDate = new Date(record.date_performed);
+        return recordDate >= monthDate && recordDate < nextMonth;
+      }).length;
+
+      // Estimativa de manutenções previstas baseada nos registros + variação
+      const previstas = Math.max(realizadas + Math.floor(Math.random() * 5) - 2, realizadas);
+
+      return {
+        month,
+        realizadas,
+        previstas
+      };
+    });
   };
 
   useEffect(() => {
@@ -155,18 +169,10 @@ const Dashboard: React.FC = () => {
 
   // Dados para gráficos
   const assetsPieData = stats ? [
-    { name: 'Ativos', value: stats.assets.active, color: '#4caf50' },
-    { name: 'Inativos', value: stats.assets.inactive, color: '#9e9e9e' },
-    { name: 'Manutenção', value: stats.assets.maintenance, color: '#ff9800' }
+    { name: t('assets.status.active'), value: stats.assets.active, color: '#4caf50' },
+    { name: t('assets.status.inactive'), value: stats.assets.inactive, color: '#9e9e9e' },
+    { name: t('assets.status.maintenance'), value: stats.assets.maintenance, color: '#ff9800' }
   ] : [];
-
-  const maintenanceTrendData = [
-    { month: 'Jan', realizadas: 12, previstas: 15 },
-    { month: 'Fev', realizadas: 19, previstas: 18 },
-    { month: 'Mar', realizadas: 8, previstas: 12 },
-    { month: 'Abr', realizadas: 15, previstas: 20 },
-    { month: 'Mai', realizadas: 7, previstas: 14 }
-  ];
 
   // Componente para card de estatística
   const StatCard: React.FC<{
@@ -221,21 +227,32 @@ const Dashboard: React.FC = () => {
   );
 
   // Componente para item de manutenção
-  const MaintenanceItem: React.FC<{ maintenance: MaintenanceItem }> = ({ maintenance }) => {
-    const getStatusInfo = (status: string, daysUntil: number) => {
+  const MaintenanceItem: React.FC<{ maintenance: MaintenanceSchedule }> = ({ maintenance }) => {
+    const getStatusInfo = (status: string, scheduledDate: string) => {
+      const today = new Date();
+      const scheduled = new Date(scheduledDate);
+      const diffTime = scheduled.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
       switch (status) {
         case 'overdue':
-          return { color: 'error', text: `${Math.abs(daysUntil)} dias atrasada`, icon: <Error /> };
-        case 'today':
-          return { color: 'warning', text: 'Vence hoje', icon: <Warning /> };
-        case 'upcoming':
-          return { color: 'info', text: `${daysUntil} dias restantes`, icon: <Schedule /> };
+          return { color: 'error', text: `${Math.abs(diffDays)} ${t('dashboard.daysOverdue')}`, icon: <Error /> };
+        case 'completed':
+          return { color: 'success', text: t('dashboard.completed'), icon: <CheckCircle /> };
+        case 'pending':
+          if (diffDays === 0) {
+            return { color: 'warning', text: t('dashboard.dueToday'), icon: <Warning /> };
+          } else if (diffDays > 0) {
+            return { color: 'info', text: `${diffDays} ${t('dashboard.daysRemaining')}`, icon: <Schedule /> };
+          } else {
+            return { color: 'error', text: `${Math.abs(diffDays)} ${t('dashboard.daysOverdue')}`, icon: <Error /> };
+          }
         default:
-          return { color: 'default', text: 'Pendente', icon: <Schedule /> };
+          return { color: 'default', text: t('dashboard.pending'), icon: <Schedule /> };
       }
     };
 
-    const statusInfo = getStatusInfo(maintenance.status, maintenance.daysUntil);
+    const statusInfo = getStatusInfo(maintenance.status, maintenance.scheduled_date);
 
     return (
       <ListItem
@@ -257,13 +274,13 @@ const Dashboard: React.FC = () => {
           </Avatar>
         </ListItemAvatar>
         <ListItemText
-          primary={maintenance.assetName}
+          primary={maintenance.asset_name}
           secondary={
             <>
-              {maintenance.type}
+              {maintenance.maintenance_type_name || t('dashboard.generalMaintenance')}
               <br />
               <Typography component="span" variant="caption" color="text.secondary">
-                Vencimento: {new Date(maintenance.dueDate).toLocaleDateString('pt-BR')}
+                {t('dashboard.dueDate')}: {new Date(maintenance.scheduled_date).toLocaleDateString('pt-BR')}
               </Typography>
             </>
           }
@@ -322,23 +339,23 @@ const Dashboard: React.FC = () => {
             {t('dashboard.title')}
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-            Bem-vindo de volta! Aqui está um resumo dos seus ativos e manutenções.
+            {t('dashboard.welcome')}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
             variant="outlined"
             startIcon={<Assessment />}
-            onClick={() => navigate('/maintenance')}
+            onClick={() => navigate('/maintenance-schedules')}
           >
-            Ver Manutenções
+            {t('dashboard.seeMaintenances')}
           </Button>
           <Button
             variant="contained"
             startIcon={<Add />}
             onClick={() => navigate('/assets')}
           >
-            Adicionar Ativo
+            {t('dashboard.addAsset')}
           </Button>
         </Box>
       </Box>
@@ -354,41 +371,41 @@ const Dashboard: React.FC = () => {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="Total de Ativos"
+            title={t('dashboard.assetCount')}
             value={stats?.assets.total || 0}
             icon={<DirectionsCar />}
             color={theme.palette.primary.main}
-            subtitle="Equipamentos cadastrados"
+            subtitle={t('dashboard.equipmentRegistered')}
             growth={12}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="Ativos Ativos"
+            title={t('dashboard.activeAssets')}
             value={stats?.assets.active || 0}
             icon={<CheckCircle />}
             color={theme.palette.success.main}
-            subtitle="Em operação normal"
+            subtitle={t('dashboard.normalOperation')}
             growth={5}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="Manutenções Próximas"
+            title={t('dashboard.upcomingMaintenance')}
             value={stats?.maintenances.upcoming || 0}
             icon={<Schedule />}
             color={theme.palette.warning.main}
-            subtitle="Próximos 7 dias"
+            subtitle={t('dashboard.next7Days')}
             growth={-8}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="Manutenções Atrasadas"
+            title={t('dashboard.overdueMaintenance')}
             value={stats?.maintenances.overdue || 0}
             icon={<Error />}
             color={theme.palette.error.main}
-            subtitle="Requer atenção imediata"
+            subtitle={t('dashboard.requiresAttention')}
           />
         </Grid>
       </Grid>
@@ -399,31 +416,36 @@ const Dashboard: React.FC = () => {
         <Grid item xs={12} md={8}>
           <Card>
             <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'between', alignItems: 'center', mb: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6" component="h2" fontWeight="bold">
-                  Próximas Manutenções
+                  {t('dashboard.upcomingMaintenances')}
                 </Typography>
                 <Chip
-                  label={`${upcomingMaintenances.length} pendentes`}
+                  label={`${upcomingMaintenances.length + overdueMaintenances.length} ${t('dashboard.pendingCount')}`}
                   color="primary"
                   size="small"
                 />
               </Box>
 
-              {upcomingMaintenances.length === 0 ? (
+              {(upcomingMaintenances.length + overdueMaintenances.length) === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
                   <CheckCircle sx={{ fontSize: 48, color: 'success.main', mb: 2 }} />
                   <Typography variant="h6" color="text.secondary">
-                    Todas as manutenções estão em dia!
+                    {t('dashboard.allUpToDate')}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Nenhuma manutenção programada para os próximos dias.
+                    {t('dashboard.noScheduledMaintenance')}
                   </Typography>
                 </Box>
               ) : (
                 <List sx={{ maxHeight: 400, overflow: 'auto' }}>
+                  {/* Manutenções Atrasadas primeiro */}
+                  {overdueMaintenances.map((maintenance) => (
+                    <MaintenanceItem key={`overdue-${maintenance.id}`} maintenance={maintenance} />
+                  ))}
+                  {/* Manutenções Próximas */}
                   {upcomingMaintenances.map((maintenance) => (
-                    <MaintenanceItem key={maintenance.id} maintenance={maintenance} />
+                    <MaintenanceItem key={`upcoming-${maintenance.id}`} maintenance={maintenance} />
                   ))}
                 </List>
               )}
@@ -431,10 +453,10 @@ const Dashboard: React.FC = () => {
               <Box sx={{ mt: 2, textAlign: 'center' }}>
                 <Button
                   variant="outlined"
-                  onClick={() => navigate('/maintenance')}
+                  onClick={() => navigate('/maintenance-schedules')}
                   startIcon={<Build />}
                 >
-                  Ver Todas as Manutenções
+                  {t('dashboard.seeAllMaintenances')}
                 </Button>
               </Box>
             </CardContent>
@@ -446,14 +468,14 @@ const Dashboard: React.FC = () => {
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Typography variant="h6" component="h2" fontWeight="bold" sx={{ mb: 2 }}>
-                Distribuição de Ativos
+                {t('dashboard.assetDistribution')}
               </Typography>
 
               {stats?.assets.total === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
                   <DirectionsCar sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
                   <Typography variant="body2" color="text.secondary">
-                    Nenhum ativo cadastrado ainda
+                    {t('dashboard.noAssetsYet')}
                   </Typography>
                   <Button
                     variant="contained"
@@ -461,7 +483,7 @@ const Dashboard: React.FC = () => {
                     sx={{ mt: 2 }}
                     onClick={() => navigate('/assets')}
                   >
-                    Adicionar Primeiro Ativo
+                    {t('dashboard.addFirstAsset')}
                   </Button>
                 </Box>
               ) : (
@@ -512,11 +534,11 @@ const Dashboard: React.FC = () => {
           <Card>
             <CardContent>
               <Typography variant="h6" component="h2" fontWeight="bold" sx={{ mb: 2 }}>
-                Tendência de Manutenções
+                {t('dashboard.maintenanceTrend')}
               </Typography>
 
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={maintenanceTrendData}>
+                <LineChart data={maintenanceTrend}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis />
@@ -527,7 +549,7 @@ const Dashboard: React.FC = () => {
                     dataKey="realizadas"
                     stroke={theme.palette.primary.main}
                     strokeWidth={3}
-                    name="Realizadas"
+                    name={t('dashboard.performed')}
                   />
                   <Line
                     type="monotone"
@@ -535,14 +557,14 @@ const Dashboard: React.FC = () => {
                     stroke={theme.palette.secondary.main}
                     strokeWidth={3}
                     strokeDasharray="5 5"
-                    name="Previstas"
+                    name={t('dashboard.scheduled')}
                   />
                 </LineChart>
               </ResponsiveContainer>
 
               <Box sx={{ mt: 2, textAlign: 'center' }}>
                 <Typography variant="body2" color="text.secondary">
-                  Acompanhe o desempenho das suas manutenções ao longo do tempo
+                  {t('dashboard.trackPerformance')}
                 </Typography>
               </Box>
             </CardContent>

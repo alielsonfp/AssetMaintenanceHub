@@ -26,10 +26,37 @@
   },
   "dashboard": {
     "title": "Main Dashboard",
+    "welcome": "Welcome back! Here's a summary of your assets and maintenance.",
     "upcomingMaintenance": "Upcoming Maintenance",
     "overdueMaintenance": "Overdue Maintenance",
     "assetCount": "Total Assets",
-    "maintenanceCount": "Total Maintenances"
+    "maintenanceCount": "Total Maintenance",
+    "activeAssets": "Active Assets",
+    "equipmentRegistered": "Equipment registered",
+    "normalOperation": "In normal operation",
+    "next7Days": "Next 7 days",
+    "requiresAttention": "Requires immediate attention",
+    "upcomingMaintenances": "Upcoming Maintenance",
+    "pendingCount": "pending",
+    "allUpToDate": "All maintenance is up to date!",
+    "noScheduledMaintenance": "No maintenance scheduled for the coming days.",
+    "seeAllMaintenances": "See All Maintenance",
+    "assetDistribution": "Asset Distribution",
+    "noAssetsYet": "No assets registered yet",
+    "addFirstAsset": "Add First Asset",
+    "maintenanceTrend": "Maintenance Trend",
+    "trackPerformance": "Track your maintenance performance over time",
+    "performed": "Performed",
+    "scheduled": "Scheduled",
+    "seeMaintenances": "See Maintenance",
+    "addAsset": "Add Asset",
+    "daysOverdue": "days overdue",
+    "dueToday": "Due today",
+    "daysRemaining": "days remaining",
+    "completed": "Completed",
+    "pending": "Pending",
+    "dueDate": "Due date",
+    "generalMaintenance": "General maintenance"
   },
   "assets": {
     "title": "My Assets",
@@ -71,7 +98,28 @@
       "completed": "Completed",
       "overdue": "Overdue"
     },
-    "noRecords": "No maintenance records"
+    "noRecords": "No maintenance records",
+    "types": {
+      "title": "Maintenance Types",
+      "add": "Add Type",
+      "edit": "Edit Type",
+      "delete": "Remove Type",
+      "name": "Name",
+      "description": "Description",
+      "isDefault": "Default Type"
+    },
+    "records": {
+      "title": "Maintenance Records",
+      "add": "Log Maintenance",
+      "edit": "Edit Record",
+      "delete": "Remove Record"
+    },
+    "schedules": {
+      "title": "Schedules",
+      "add": "New Schedule",
+      "edit": "Edit Schedule",
+      "delete": "Remove Schedule"
+    }
   },
   "common": {
     "save": "Save",
