@@ -1,7 +1,5 @@
 // frontend/src/App.tsx
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useContext } from 'react';
-import { AppContext } from './context/AppContext';
 import { Box } from '@mui/material';
 
 // Páginas de autenticação
@@ -29,7 +27,7 @@ const ComingSoon = ({ pageName }: { pageName: string }) => (
 );
 
 function App() {
-  const { themeMode } = useContext(AppContext);
+
 
   return (
     <Box

@@ -22,7 +22,7 @@ services:
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_NAME: maintenance_system
-      DB_PORT: 5450
+      DB_PORT: 5432
       NODE_ENV: development
       PORT: 3001
       JWT_SECRET: dev_secret
