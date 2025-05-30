@@ -397,7 +397,7 @@ const MaintenanceSchedules: React.FC = () => {
         )}
 
         <Grid container spacing={3}>
-          {/* Manutenções Atrasadas */}
+          {/* Manutenções Atrasadas
           <Grid item xs={12} md={6}>
             <Card sx={{ height: '100%' }}>
               <CardContent>
@@ -434,7 +434,7 @@ const MaintenanceSchedules: React.FC = () => {
                 )}
               </CardContent>
             </Card>
-          </Grid>
+          </Grid> */}
 
           {/* Próximas Manutenções */}
           <Grid item xs={12} md={6}>

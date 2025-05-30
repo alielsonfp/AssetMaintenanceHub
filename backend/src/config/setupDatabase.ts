@@ -6,11 +6,9 @@ import path from 'path';
 dotenv.config();
 
 async function setupDatabase() {
-  // Aguardar um pouco para garantir que o PostgreSQL está pronto
   console.log('Aguardando PostgreSQL inicializar...');
   await new Promise(resolve => setTimeout(resolve, 3000));
 
-  // Criar um novo pool específico para a configuração
   const pool = new Pool({
     user: process.env.DB_USER || 'postgres',
     host: process.env.DB_HOST || 'localhost',
@@ -20,27 +18,25 @@ async function setupDatabase() {
   });
 
   try {
-    // Testar conexão primeiro
     await pool.query('SELECT NOW()');
     console.log('Conexão com PostgreSQL estabelecida!');
 
-    // Ler o arquivo SQL
-    const sql = fs.readFileSync(
-      path.join(__dirname, 'database.sql'),
-      'utf8'
-    );
-
-    // Executar o script SQL
+    // 1. Executar script principal
+    const sql = fs.readFileSync(path.join(__dirname, 'database.sql'), 'utf8');
     await pool.query(sql);
-    console.log('Banco de dados inicializado com sucesso!');
+    console.log('✅ Estrutura do banco criada!');
+
+    // 2. 🎯 NOVO: Executar script de dados demo
+    const demoSql = fs.readFileSync(path.join(__dirname, 'demoData.sql'), 'utf8');
+    await pool.query(demoSql);
+    console.log('✅ Função de dados demo instalada!');
+
   } catch (error) {
     console.error('Erro ao inicializar o banco de dados:', error);
     process.exit(1);
   } finally {
-    // Fechar a conexão
     await pool.end();
   }
 }
 
-// Executar a função
 setupDatabase();

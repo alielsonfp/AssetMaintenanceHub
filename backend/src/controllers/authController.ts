@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import * as jwt from 'jsonwebtoken';
 import userModel from '../models/userModel';
 import dotenv from 'dotenv';
+import db from '../config/db';
 
 dotenv.config();
 
@@ -37,6 +38,15 @@ const authController = {
 
       // Criar o usuário
       const user = await userModel.create({ name, email, password });
+
+      // 🎯 NOVO: Criar dados de demonstração
+      try {
+        await db.query('SELECT create_demo_data($1)', [user.id]);
+        console.log(`✅ Dados demo criados para usuário ${user.id}`);
+      } catch (demoError) {
+        console.error('❌ Erro ao criar dados demo:', demoError);
+        // Não falha o registro se der erro nos dados demo
+      }
 
       // Remover o password antes de retornar
       const userWithoutPassword = {
