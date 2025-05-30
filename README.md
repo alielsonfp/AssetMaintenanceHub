@@ -139,7 +139,12 @@ Antes de começar, certifique-se de ter instalado:
    docker-compose up -d
    ```
 
-4. **Acesse a aplicação:**
+4. **Inicialize o banco de dados:**
+   ```bash
+   docker-compose exec backend npm run setup-db
+   ```
+
+5. **Acesse a aplicação:**
    - Frontend: `http://localhost:3000`
    - Backend: `http://localhost:3001`
    - Banco: `localhost:5432`
@@ -225,7 +230,11 @@ NODE_ENV=development
 
 ### **Com Docker:**
 ```bash
+# Subir os serviços
 docker-compose up -d
+
+# Inicializar o banco de dados (primeira execução)
+docker-compose exec backend npm run setup-db
 ```
 
 ### **Desenvolvimento:**
