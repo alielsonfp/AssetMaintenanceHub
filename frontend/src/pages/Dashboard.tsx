@@ -376,7 +376,6 @@ const Dashboard: React.FC = () => {
             icon={<DirectionsCar />}
             color={theme.palette.primary.main}
             subtitle={t('dashboard.equipmentRegistered')}
-            growth={12}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
@@ -386,7 +385,6 @@ const Dashboard: React.FC = () => {
             icon={<CheckCircle />}
             color={theme.palette.success.main}
             subtitle={t('dashboard.normalOperation')}
-            growth={5}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
@@ -396,7 +394,6 @@ const Dashboard: React.FC = () => {
             icon={<Schedule />}
             color={theme.palette.warning.main}
             subtitle={t('dashboard.next7Days')}
-            growth={-8}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>

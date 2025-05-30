@@ -1,0 +1,3029 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+4. Repository files, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+<additional_info>
+
+</additional_info>
+
+</file_summary>
+
+<directory_structure>
+Dockerfile
+package.json
+src/config/database.sql
+src/config/db.ts
+src/config/setupDatabase.ts
+src/controllers/assetsController.ts
+src/controllers/authController.ts
+src/controllers/maintenanceRecordController.ts
+src/controllers/maintenanceScheduleController.ts
+src/controllers/maintenanceTypeController.ts
+src/controllers/passwordController.ts
+src/index.ts
+src/middlewares/authMiddleware.ts
+src/models/assetModel.ts
+src/models/maintenanceRecordModel.ts
+src/models/maintenanceScheduleModel.ts
+src/models/maintenanceTypeModel.ts
+src/models/userModel.ts
+src/routes/assetRoutes.ts
+src/routes/authRoutes.ts
+src/routes/maintenanceRecordRoutes.ts
+src/routes/maintenanceScheduleRoutes.ts
+src/routes/maintenanceTypeRoutes.ts
+src/services/emailService.ts
+tsconfig.json
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="Dockerfile">
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+RUN npm run build
+
+EXPOSE 3001
+
+CMD ["npm", "start"]
+</file>
+
+<file path="package.json">
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "nodemon src/index.ts",
+    "build": "tsc",
+    "setup-db": "ts-node src/config/setupDatabase.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@types/express": "^4.17.21",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^7.0.3",
+    "pg": "^8.16.0"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/cors": "^2.8.18",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/nodemailer": "^6.4.17",
+    "@types/pg": "^8.15.2",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
+</file>
+
+<file path="src/config/database.sql">
+-- Tabelas necessárias para o sistema de manutenção de ativos
+
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE assets (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    location VARCHAR(100),
+    status VARCHAR(20) DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE maintenance_types (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    is_default BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE maintenance_records (
+    id SERIAL PRIMARY KEY,
+    asset_id INTEGER REFERENCES assets(id) ON DELETE CASCADE,
+    maintenance_type_id INTEGER REFERENCES maintenance_types(id) ON DELETE SET NULL,
+    date_performed DATE NOT NULL,
+    notes TEXT,
+    cost DECIMAL(10,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE maintenance_schedules (
+    id SERIAL PRIMARY KEY,
+    asset_id INTEGER REFERENCES assets(id) ON DELETE CASCADE,
+    maintenance_type_id INTEGER REFERENCES maintenance_types(id) ON DELETE SET NULL,
+    based_on_record_id INTEGER REFERENCES maintenance_records(id) ON DELETE SET NULL,
+    scheduled_date DATE NOT NULL,
+    status VARCHAR(20) DEFAULT 'pending',
+    frequency_type VARCHAR(20) NOT NULL,
+    frequency_value INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE password_reset_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    token VARCHAR(100) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Índices para melhorar performance
+CREATE INDEX idx_assets_user_id ON assets(user_id);
+CREATE INDEX idx_maintenance_records_asset_id ON maintenance_records(asset_id);
+CREATE INDEX idx_maintenance_schedules_asset_id ON maintenance_schedules(asset_id);
+CREATE INDEX idx_maintenance_schedules_status ON maintenance_schedules(status);
+</file>
+
+<file path="src/config/db.ts">
+import { Pool } from 'pg';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+// Em vez de criar o pool imediatamente, crie uma função para obter o pool
+let pool: Pool;
+
+function getPool() {
+  if (!pool) {
+    pool = new Pool({
+      user: process.env.DB_USER || 'postgres',
+      host: process.env.DB_HOST || 'localhost',
+      database: process.env.DB_NAME || 'maintenance_system',
+      password: process.env.DB_PASSWORD || 'postgres',
+      port: parseInt(process.env.DB_PORT || '5432'),
+    });
+  }
+  return pool;
+}
+
+export default {
+  query: async (text: string, params?: any[]) => {
+    const client = await getPool().connect();
+    try {
+      return await client.query(text, params);
+    } finally {
+      client.release();
+    }
+  },
+  getClient: () => getPool().connect(),
+};
+</file>
+
+<file path="src/config/setupDatabase.ts">
+import { Pool } from 'pg';
+import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+
+dotenv.config();
+
+async function setupDatabase() {
+  // Aguardar um pouco para garantir que o PostgreSQL está pronto
+  console.log('Aguardando PostgreSQL inicializar...');
+  await new Promise(resolve => setTimeout(resolve, 3000));
+
+  // Criar um novo pool específico para a configuração
+  const pool = new Pool({
+    user: process.env.DB_USER || 'postgres',
+    host: process.env.DB_HOST || 'localhost',
+    database: process.env.DB_NAME || 'maintenance_system',
+    password: process.env.DB_PASSWORD || 'postgres',
+    port: parseInt(process.env.DB_PORT || '5432'),
+  });
+
+  try {
+    // Testar conexão primeiro
+    await pool.query('SELECT NOW()');
+    console.log('Conexão com PostgreSQL estabelecida!');
+
+    // Ler o arquivo SQL
+    const sql = fs.readFileSync(
+      path.join(__dirname, 'database.sql'),
+      'utf8'
+    );
+
+    // Executar o script SQL
+    await pool.query(sql);
+    console.log('Banco de dados inicializado com sucesso!');
+  } catch (error) {
+    console.error('Erro ao inicializar o banco de dados:', error);
+    process.exit(1);
+  } finally {
+    // Fechar a conexão
+    await pool.end();
+  }
+}
+
+// Executar a função
+setupDatabase();
+</file>
+
+<file path="src/controllers/assetsController.ts">
+// backend/src/controllers/assetsController.ts
+import { Request, Response } from 'express';
+import assetModel, { CreateAssetData, UpdateAssetData } from '../models/assetModel';
+
+const assetsController = {
+  async getAll(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      const assets = await assetModel.findAllByUserId(userId);
+
+      return res.json({
+        assets,
+        total: assets.length
+      });
+    } catch (error) {
+      console.error('Erro ao buscar ativos:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async getById(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      const assetId = parseInt(req.params.id);
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      if (isNaN(assetId)) {
+        return res.status(400).json({ message: 'ID do ativo inválido' });
+      }
+
+      const asset = await assetModel.findById(assetId, userId);
+
+      if (!asset) {
+        return res.status(404).json({ message: 'Ativo não encontrado' });
+      }
+
+      return res.json({ asset });
+    } catch (error) {
+      console.error('Erro ao buscar ativo:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async create(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      const { name, description, location, status }: CreateAssetData = req.body;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      if (!name || name.trim().length === 0) {
+        return res.status(400).json({ message: 'Nome do ativo é obrigatório' });
+      }
+
+      // Validar status se fornecido
+      if (status && !['active', 'inactive', 'maintenance'].includes(status)) {
+        return res.status(400).json({
+          message: 'Status deve ser: active, inactive ou maintenance'
+        });
+      }
+
+      const assetData: CreateAssetData = {
+        name: name.trim(),
+        description: description?.trim(),
+        location: location?.trim(),
+        status: status || 'active'
+      };
+
+      const asset = await assetModel.create(userId, assetData);
+
+      return res.status(201).json({
+        message: 'Ativo criado com sucesso',
+        asset
+      });
+    } catch (error) {
+      console.error('Erro ao criar ativo:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async update(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      const assetId = parseInt(req.params.id);
+      const { name, description, location, status }: UpdateAssetData = req.body;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      if (isNaN(assetId)) {
+        return res.status(400).json({ message: 'ID do ativo inválido' });
+      }
+
+      // Verificar se o ativo existe e pertence ao usuário
+      const existingAsset = await assetModel.findById(assetId, userId);
+      if (!existingAsset) {
+        return res.status(404).json({ message: 'Ativo não encontrado' });
+      }
+
+      // Validar campos se fornecidos
+      if (name !== undefined && name.trim().length === 0) {
+        return res.status(400).json({ message: 'Nome do ativo não pode estar vazio' });
+      }
+
+      if (status && !['active', 'inactive', 'maintenance'].includes(status)) {
+        return res.status(400).json({
+          message: 'Status deve ser: active, inactive ou maintenance'
+        });
+      }
+
+      const updateData: UpdateAssetData = {};
+
+      if (name !== undefined) updateData.name = name.trim();
+      if (description !== undefined) updateData.description = description?.trim();
+      if (location !== undefined) updateData.location = location?.trim();
+      if (status !== undefined) updateData.status = status;
+
+      const updatedAsset = await assetModel.update(assetId, userId, updateData);
+
+      return res.json({
+        message: 'Ativo atualizado com sucesso',
+        asset: updatedAsset
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar ativo:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async delete(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      const assetId = parseInt(req.params.id);
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      if (isNaN(assetId)) {
+        return res.status(400).json({ message: 'ID do ativo inválido' });
+      }
+
+      // Verificar se o ativo existe e pertence ao usuário
+      const existingAsset = await assetModel.findById(assetId, userId);
+      if (!existingAsset) {
+        return res.status(404).json({ message: 'Ativo não encontrado' });
+      }
+
+      const deleted = await assetModel.delete(assetId, userId);
+
+      if (!deleted) {
+        return res.status(500).json({ message: 'Erro ao deletar ativo' });
+      }
+
+      return res.json({
+        message: 'Ativo removido com sucesso'
+      });
+    } catch (error) {
+      console.error('Erro ao deletar ativo:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async getStats(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      const stats = await assetModel.getAssetStats(userId);
+
+      return res.json({
+        stats: {
+          total: parseInt(stats.total),
+          active: parseInt(stats.active),
+          inactive: parseInt(stats.inactive),
+          maintenance: parseInt(stats.maintenance)
+        }
+      });
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  }
+};
+
+export default assetsController;
+</file>
+
+<file path="src/controllers/authController.ts">
+import { Request, Response } from 'express';
+import * as jwt from 'jsonwebtoken';
+import userModel from '../models/userModel';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+// Tipagem correta para o payload
+interface JwtPayload {
+  id: number;
+  name: string;
+  email: string;
+}
+
+// Função para gerar token JWT
+function generateToken(payload: JwtPayload): string {
+  const secret = process.env.JWT_SECRET || 'default_secret';
+  return jwt.sign(payload, secret, {
+    expiresIn: process.env.JWT_EXPIRES_IN || '1d',
+  } as jwt.SignOptions);
+}
+
+const authController = {
+  async register(req: Request, res: Response): Promise<Response> {
+    try {
+      const { name, email, password } = req.body;
+
+      if (!name || !email || !password) {
+        return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
+      }
+
+      // Verificar se o email já está em uso
+      const existingUser = await userModel.findByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: 'Email já está em uso' });
+      }
+
+      // Criar o usuário
+      const user = await userModel.create({ name, email, password });
+
+      // Remover o password antes de retornar
+      const userWithoutPassword = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        created_at: user.created_at,
+        updated_at: user.updated_at
+      };
+
+      return res.status(201).json({
+        user: userWithoutPassword,
+        token: generateToken({ id: user.id, name: user.name, email: user.email }),
+      });
+    } catch (error) {
+      console.error('Erro ao registrar usuário:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async login(req: Request, res: Response): Promise<Response> {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ message: 'Email e senha são obrigatórios' });
+      }
+
+      // Buscar usuário pelo email
+      const user = await userModel.findByEmail(email);
+      if (!user) {
+        return res.status(401).json({ message: 'Credenciais inválidas' });
+      }
+
+      // Verificar senha
+      const passwordMatch = await userModel.validatePassword(password, user.password_hash);
+      if (!passwordMatch) {
+        return res.status(401).json({ message: 'Credenciais inválidas' });
+      }
+
+      return res.json({
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        },
+        token: generateToken({ id: user.id, name: user.name, email: user.email }),
+      });
+    } catch (error) {
+      console.error('Erro ao fazer login:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async getProfile(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      const user = await userModel.findById(userId);
+
+      if (!user) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+
+      return res.json({ user });
+    } catch (error) {
+      console.error('Erro ao obter perfil:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+};
+
+export default authController;
+</file>
+
+<file path="src/controllers/maintenanceRecordController.ts">
+// backend/src/controllers/maintenanceRecordController.ts
+import { Request, Response } from 'express';
+import maintenanceRecordModel, { CreateMaintenanceRecordData, UpdateMaintenanceRecordData } from '../models/maintenanceRecordModel';
+import maintenanceScheduleModel from '../models/maintenanceScheduleModel';
+
+const maintenanceRecordController = {
+  async getAll(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      const maintenanceRecords = await maintenanceRecordModel.findAllByUserId(userId);
+
+      return res.json({
+        maintenanceRecords,
+        total: maintenanceRecords.length
+      });
+    } catch (error) {
+      console.error('Erro ao buscar registros de manutenção:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async getByAsset(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      const assetId = parseInt(req.params.assetId);
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      if (isNaN(assetId)) {
+        return res.status(400).json({ message: 'ID do ativo inválido' });
+      }
+
+      const maintenanceRecords = await maintenanceRecordModel.findByAssetId(assetId, userId);
+
+      return res.json({
+        maintenanceRecords,
+        total: maintenanceRecords.length,
+        assetId
+      });
+    } catch (error) {
+      console.error('Erro ao buscar registros por ativo:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async getById(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      const recordId = parseInt(req.params.id);
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      if (isNaN(recordId)) {
+        return res.status(400).json({ message: 'ID do registro inválido' });
+      }
+
+      const maintenanceRecord = await maintenanceRecordModel.findById(recordId, userId);
+
+      if (!maintenanceRecord) {
+        return res.status(404).json({ message: 'Registro de manutenção não encontrado' });
+      }
+
+      return res.json({ maintenanceRecord });
+    } catch (error) {
+      console.error('Erro ao buscar registro de manutenção:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async create(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      const { asset_id, maintenance_type_id, date_performed, notes, cost }: CreateMaintenanceRecordData = req.body;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      // Validações obrigatórias
+      if (!asset_id) {
+        return res.status(400).json({ message: 'ID do ativo é obrigatório' });
+      }
+
+      if (!date_performed) {
+        return res.status(400).json({ message: 'Data da manutenção é obrigatória' });
+      }
+
+      // Validar formato da data
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(date_performed)) {
+        return res.status(400).json({ message: 'Formato de data inválido (use YYYY-MM-DD)' });
+      }
+
+      // Validar custo se fornecido
+      if (cost !== undefined && cost !== null && (cost < 0 || isNaN(cost))) {
+        return res.status(400).json({ message: 'Custo deve ser um número positivo' });
+      }
+
+      const data: CreateMaintenanceRecordData = {
+        asset_id: parseInt(asset_id.toString()),
+        maintenance_type_id: maintenance_type_id ? parseInt(maintenance_type_id.toString()) : undefined,
+        date_performed,
+        notes: notes?.trim(),
+        cost: cost ? parseFloat(cost.toString()) : undefined
+      };
+
+      const maintenanceRecord = await maintenanceRecordModel.create(userId, data);
+
+      // **AUTOMAÇÃO: Verificar se existe agendamento pendente para este ativo/tipo**
+      if (data.maintenance_type_id) {
+        try {
+          const assetSchedules = await maintenanceScheduleModel.findByAssetId(data.asset_id, userId);
+          const pendingSchedule = assetSchedules.find(
+            schedule => schedule.maintenance_type_id === data.maintenance_type_id &&
+              schedule.status === 'pending'
+          );
+
+          if (pendingSchedule) {
+            // Marcar como completo e criar próximo agendamento
+            await maintenanceScheduleModel.markAsCompleted(
+              pendingSchedule.id!,
+              userId,
+              maintenanceRecord.id!
+            );
+            console.log(`✅ Agendamento ${pendingSchedule.id} marcado como completo e próximo criado automaticamente`);
+          }
+        } catch (scheduleError) {
+          console.error('Erro ao processar agendamento automático:', scheduleError);
+          // Não falha a criação do registro se houver erro no agendamento
+        }
+      }
+
+      return res.status(201).json({
+        message: 'Registro de manutenção criado com sucesso',
+        maintenanceRecord
+      });
+    } catch (error: any) {
+      console.error('Erro ao criar registro de manutenção:', error);
+
+      if (error.message.includes('não encontrado') || error.message.includes('não pertence')) {
+        return res.status(400).json({ message: error.message });
+      }
+
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async update(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      const recordId = parseInt(req.params.id);
+      const { maintenance_type_id, date_performed, notes, cost }: UpdateMaintenanceRecordData = req.body;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      if (isNaN(recordId)) {
+        return res.status(400).json({ message: 'ID do registro inválido' });
+      }
+
+      // Validar formato da data se fornecida
+      if (date_performed !== undefined) {
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(date_performed)) {
+          return res.status(400).json({ message: 'Formato de data inválido (use YYYY-MM-DD)' });
+        }
+      }
+
+      // Validar custo se fornecido
+      if (cost !== undefined && cost !== null && (cost < 0 || isNaN(cost))) {
+        return res.status(400).json({ message: 'Custo deve ser um número positivo' });
+      }
+
+      const updateData: UpdateMaintenanceRecordData = {};
+
+      if (maintenance_type_id !== undefined) {
+        updateData.maintenance_type_id = maintenance_type_id ? parseInt(maintenance_type_id.toString()) : null;
+      }
+      if (date_performed !== undefined) updateData.date_performed = date_performed;
+      if (notes !== undefined) updateData.notes = notes?.trim() || null;
+      if (cost !== undefined) updateData.cost = cost ? parseFloat(cost.toString()) : null;
+
+      const updatedRecord = await maintenanceRecordModel.update(recordId, userId, updateData);
+
+      return res.json({
+        message: 'Registro de manutenção atualizado com sucesso',
+        maintenanceRecord: updatedRecord
+      });
+    } catch (error: any) {
+      console.error('Erro ao atualizar registro de manutenção:', error);
+
+      if (error.message.includes('não encontrado') || error.message.includes('não pertence')) {
+        return res.status(400).json({ message: error.message });
+      }
+
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async delete(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      const recordId = parseInt(req.params.id);
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      if (isNaN(recordId)) {
+        return res.status(400).json({ message: 'ID do registro inválido' });
+      }
+
+      const deleted = await maintenanceRecordModel.delete(recordId, userId);
+
+      if (!deleted) {
+        return res.status(404).json({ message: 'Registro de manutenção não encontrado' });
+      }
+
+      return res.json({
+        message: 'Registro de manutenção removido com sucesso'
+      });
+    } catch (error) {
+      console.error('Erro ao deletar registro de manutenção:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async getStats(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      const stats = await maintenanceRecordModel.getStats(userId);
+
+      return res.json({
+        stats: {
+          totalRecords: parseInt(stats.total_records),
+          assetsWithMaintenance: parseInt(stats.assets_with_maintenance),
+          totalCost: parseFloat(stats.total_cost) || 0,
+          averageCost: parseFloat(stats.average_cost) || 0,
+          last30Days: parseInt(stats.last_30_days),
+          last90Days: parseInt(stats.last_90_days)
+        }
+      });
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async getRecent(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      const limit = parseInt(req.query.limit as string) || 10;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      if (limit > 50) {
+        return res.status(400).json({ message: 'Limite máximo de 50 registros' });
+      }
+
+      const recentMaintenances = await maintenanceRecordModel.getRecentMaintenances(userId, limit);
+
+      return res.json({
+        maintenanceRecords: recentMaintenances,
+        total: recentMaintenances.length,
+        limit
+      });
+    } catch (error) {
+      console.error('Erro ao buscar manutenções recentes:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async getByDateRange(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      const { startDate, endDate } = req.query;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      if (!startDate || !endDate) {
+        return res.status(400).json({ message: 'Data inicial e final são obrigatórias' });
+      }
+
+      const maintenanceRecords = await maintenanceRecordModel.getMaintenancesByDateRange(
+        userId,
+        startDate as string,
+        endDate as string
+      );
+
+      return res.json({
+        maintenanceRecords,
+        total: maintenanceRecords.length,
+        dateRange: { startDate, endDate }
+      });
+    } catch (error) {
+      console.error('Erro ao buscar manutenções por período:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async getByType(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      const typeId = parseInt(req.params.typeId);
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      if (isNaN(typeId)) {
+        return res.status(400).json({ message: 'ID do tipo de manutenção inválido' });
+      }
+
+      const maintenanceRecords = await maintenanceRecordModel.getMaintenancesByType(userId, typeId);
+
+      return res.json({
+        maintenanceRecords,
+        total: maintenanceRecords.length,
+        typeId
+      });
+    } catch (error) {
+      console.error('Erro ao buscar manutenções por tipo:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  }
+};
+
+export default maintenanceRecordController;
+</file>
+
+<file path="src/controllers/maintenanceScheduleController.ts">
+// backend/src/controllers/maintenanceScheduleController.ts
+import { Request, Response } from 'express';
+import maintenanceScheduleModel, { CreateMaintenanceScheduleData, UpdateMaintenanceScheduleData } from '../models/maintenanceScheduleModel';
+
+const maintenanceScheduleController = {
+  async getAll(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      // Atualizar status de agendamentos atrasados antes de retornar
+      await maintenanceScheduleModel.updateOverdueStatus(userId);
+
+      const schedules = await maintenanceScheduleModel.findAllByUserId(userId);
+
+      return res.json({
+        schedules,
+        total: schedules.length
+      });
+    } catch (error) {
+      console.error('Erro ao buscar agendamentos:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async getByAsset(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      const assetId = parseInt(req.params.assetId);
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      if (isNaN(assetId)) {
+        return res.status(400).json({ message: 'ID do ativo inválido' });
+      }
+
+      const schedules = await maintenanceScheduleModel.findByAssetId(assetId, userId);
+
+      return res.json({
+        schedules,
+        total: schedules.length,
+        assetId
+      });
+    } catch (error) {
+      console.error('Erro ao buscar agendamentos por ativo:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async getById(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      const scheduleId = parseInt(req.params.id);
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      if (isNaN(scheduleId)) {
+        return res.status(400).json({ message: 'ID do agendamento inválido' });
+      }
+
+      const schedule = await maintenanceScheduleModel.findById(scheduleId, userId);
+
+      if (!schedule) {
+        return res.status(404).json({ message: 'Agendamento não encontrado' });
+      }
+
+      return res.json({ schedule });
+    } catch (error) {
+      console.error('Erro ao buscar agendamento:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async create(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      const { asset_id, maintenance_type_id, based_on_record_id, frequency_type, frequency_value, scheduled_date }: CreateMaintenanceScheduleData = req.body;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      // Validações obrigatórias
+      if (!asset_id) {
+        return res.status(400).json({ message: 'ID do ativo é obrigatório' });
+      }
+
+      if (!frequency_type) {
+        return res.status(400).json({ message: 'Tipo de frequência é obrigatório' });
+      }
+
+      if (!frequency_value || frequency_value <= 0) {
+        return res.status(400).json({ message: 'Valor da frequência deve ser maior que zero' });
+      }
+
+      // Validar tipo de frequência
+      const validFrequencyTypes = ['days', 'weeks', 'months', 'kilometers', 'hours'];
+      if (!validFrequencyTypes.includes(frequency_type)) {
+        return res.status(400).json({
+          message: 'Tipo de frequência inválido. Use: days, weeks, months, kilometers, hours'
+        });
+      }
+
+      // Validar formato da data se fornecida
+      if (scheduled_date) {
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(scheduled_date)) {
+          return res.status(400).json({ message: 'Formato de data inválido (use YYYY-MM-DD)' });
+        }
+      }
+
+      const data: CreateMaintenanceScheduleData = {
+        asset_id: parseInt(asset_id.toString()),
+        maintenance_type_id: maintenance_type_id ? parseInt(maintenance_type_id.toString()) : undefined,
+        based_on_record_id: based_on_record_id ? parseInt(based_on_record_id.toString()) : undefined,
+        frequency_type,
+        frequency_value: parseInt(frequency_value.toString()),
+        scheduled_date
+      };
+
+      const schedule = await maintenanceScheduleModel.create(userId, data);
+
+      return res.status(201).json({
+        message: 'Agendamento criado com sucesso',
+        schedule
+      });
+    } catch (error: any) {
+      console.error('Erro ao criar agendamento:', error);
+
+      if (error.message.includes('não encontrado') || error.message.includes('não pertence')) {
+        return res.status(400).json({ message: error.message });
+      }
+
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async update(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      const scheduleId = parseInt(req.params.id);
+      const { scheduled_date, status, frequency_type, frequency_value }: UpdateMaintenanceScheduleData = req.body;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      if (isNaN(scheduleId)) {
+        return res.status(400).json({ message: 'ID do agendamento inválido' });
+      }
+
+      // Validar formato da data se fornecida
+      if (scheduled_date !== undefined) {
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(scheduled_date)) {
+          return res.status(400).json({ message: 'Formato de data inválido (use YYYY-MM-DD)' });
+        }
+      }
+
+      // Validar status se fornecido
+      if (status !== undefined) {
+        const validStatuses = ['pending', 'completed', 'overdue'];
+        if (!validStatuses.includes(status)) {
+          return res.status(400).json({
+            message: 'Status inválido. Use: pending, completed, overdue'
+          });
+        }
+      }
+
+      // Validar tipo de frequência se fornecido
+      if (frequency_type !== undefined) {
+        const validFrequencyTypes = ['days', 'weeks', 'months', 'kilometers', 'hours'];
+        if (!validFrequencyTypes.includes(frequency_type)) {
+          return res.status(400).json({
+            message: 'Tipo de frequência inválido. Use: days, weeks, months, kilometers, hours'
+          });
+        }
+      }
+
+      // Validar valor da frequência se fornecido
+      if (frequency_value !== undefined && frequency_value <= 0) {
+        return res.status(400).json({ message: 'Valor da frequência deve ser maior que zero' });
+      }
+
+      const updateData: UpdateMaintenanceScheduleData = {};
+
+      if (scheduled_date !== undefined) updateData.scheduled_date = scheduled_date;
+      if (status !== undefined) updateData.status = status;
+      if (frequency_type !== undefined) updateData.frequency_type = frequency_type;
+      if (frequency_value !== undefined) updateData.frequency_value = frequency_value;
+
+      const updatedSchedule = await maintenanceScheduleModel.update(scheduleId, userId, updateData);
+
+      return res.json({
+        message: 'Agendamento atualizado com sucesso',
+        schedule: updatedSchedule
+      });
+    } catch (error: any) {
+      console.error('Erro ao atualizar agendamento:', error);
+
+      if (error.message.includes('não encontrado') || error.message.includes('não pertence')) {
+        return res.status(400).json({ message: error.message });
+      }
+
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async delete(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      const scheduleId = parseInt(req.params.id);
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      if (isNaN(scheduleId)) {
+        return res.status(400).json({ message: 'ID do agendamento inválido' });
+      }
+
+      const deleted = await maintenanceScheduleModel.delete(scheduleId, userId);
+
+      if (!deleted) {
+        return res.status(404).json({ message: 'Agendamento não encontrado' });
+      }
+
+      return res.json({
+        message: 'Agendamento removido com sucesso'
+      });
+    } catch (error) {
+      console.error('Erro ao deletar agendamento:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async getUpcoming(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      const days = parseInt(req.query.days as string) || 7;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      if (days > 365) {
+        return res.status(400).json({ message: 'Período máximo de 365 dias' });
+      }
+
+      const upcomingSchedules = await maintenanceScheduleModel.findUpcoming(userId, days);
+
+      return res.json({
+        schedules: upcomingSchedules,
+        total: upcomingSchedules.length,
+        days
+      });
+    } catch (error) {
+      console.error('Erro ao buscar manutenções próximas:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async getOverdue(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      // Atualizar status antes de buscar
+      await maintenanceScheduleModel.updateOverdueStatus(userId);
+
+      const overdueSchedules = await maintenanceScheduleModel.findOverdue(userId);
+
+      return res.json({
+        schedules: overdueSchedules,
+        total: overdueSchedules.length
+      });
+    } catch (error) {
+      console.error('Erro ao buscar manutenções atrasadas:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async markCompleted(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      const scheduleId = parseInt(req.params.id);
+      const { recordId } = req.body;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      if (isNaN(scheduleId)) {
+        return res.status(400).json({ message: 'ID do agendamento inválido' });
+      }
+
+      if (!recordId) {
+        return res.status(400).json({ message: 'ID do registro de manutenção é obrigatório' });
+      }
+
+      const nextSchedule = await maintenanceScheduleModel.markAsCompleted(
+        scheduleId,
+        userId,
+        parseInt(recordId.toString())
+      );
+
+      return res.json({
+        message: 'Manutenção marcada como concluída e próxima agendada',
+        nextSchedule
+      });
+    } catch (error: any) {
+      console.error('Erro ao marcar como concluída:', error);
+
+      if (error.message.includes('não encontrado')) {
+        return res.status(404).json({ message: error.message });
+      }
+
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async getStats(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      // Atualizar status antes de calcular estatísticas
+      await maintenanceScheduleModel.updateOverdueStatus(userId);
+
+      const stats = await maintenanceScheduleModel.getStats(userId);
+
+      return res.json({
+        stats: {
+          totalSchedules: parseInt(stats.total_schedules),
+          pending: parseInt(stats.pending),
+          completed: parseInt(stats.completed),
+          overdue: parseInt(stats.overdue),
+          upcomingWeek: parseInt(stats.upcoming_week),
+          upcomingMonth: parseInt(stats.upcoming_month)
+        }
+      });
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  }
+};
+
+export default maintenanceScheduleController;
+</file>
+
+<file path="src/controllers/maintenanceTypeController.ts">
+// backend/src/controllers/maintenanceTypeController.ts
+import { Request, Response } from 'express';
+import maintenanceTypeModel, { CreateMaintenanceTypeData, UpdateMaintenanceTypeData } from '../models/maintenanceTypeModel';
+
+const maintenanceTypeController = {
+  async getAll(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      const maintenanceTypes = await maintenanceTypeModel.findAllByUserId(userId);
+
+      return res.json({
+        maintenanceTypes,
+        total: maintenanceTypes.length
+      });
+    } catch (error) {
+      console.error('Erro ao buscar tipos de manutenção:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async getById(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      const typeId = parseInt(req.params.id);
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      if (isNaN(typeId)) {
+        return res.status(400).json({ message: 'ID do tipo de manutenção inválido' });
+      }
+
+      const maintenanceType = await maintenanceTypeModel.findById(typeId, userId);
+
+      if (!maintenanceType) {
+        return res.status(404).json({ message: 'Tipo de manutenção não encontrado' });
+      }
+
+      return res.json({ maintenanceType });
+    } catch (error) {
+      console.error('Erro ao buscar tipo de manutenção:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async create(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      const { name, description, is_default }: CreateMaintenanceTypeData = req.body;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      if (!name || name.trim().length === 0) {
+        return res.status(400).json({ message: 'Nome do tipo de manutenção é obrigatório' });
+      }
+
+      const data: CreateMaintenanceTypeData = {
+        name: name.trim(),
+        description: description?.trim(),
+        is_default: is_default || false
+      };
+
+      const maintenanceType = await maintenanceTypeModel.create(userId, data);
+
+      return res.status(201).json({
+        message: 'Tipo de manutenção criado com sucesso',
+        maintenanceType
+      });
+    } catch (error) {
+      console.error('Erro ao criar tipo de manutenção:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async update(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      const typeId = parseInt(req.params.id);
+      const { name, description, is_default }: UpdateMaintenanceTypeData = req.body;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      if (isNaN(typeId)) {
+        return res.status(400).json({ message: 'ID do tipo de manutenção inválido' });
+      }
+
+      // Verificar se o tipo existe e pertence ao usuário
+      const existingType = await maintenanceTypeModel.findById(typeId, userId);
+      if (!existingType) {
+        return res.status(404).json({ message: 'Tipo de manutenção não encontrado' });
+      }
+
+      // Validar campos se fornecidos
+      if (name !== undefined && name.trim().length === 0) {
+        return res.status(400).json({ message: 'Nome do tipo de manutenção não pode estar vazio' });
+      }
+
+      const updateData: UpdateMaintenanceTypeData = {};
+
+      if (name !== undefined) updateData.name = name.trim();
+      if (description !== undefined) updateData.description = description?.trim();
+      if (is_default !== undefined) updateData.is_default = is_default;
+
+      const updatedType = await maintenanceTypeModel.update(typeId, userId, updateData);
+
+      return res.json({
+        message: 'Tipo de manutenção atualizado com sucesso',
+        maintenanceType: updatedType
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar tipo de manutenção:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async delete(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+      const typeId = parseInt(req.params.id);
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      if (isNaN(typeId)) {
+        return res.status(400).json({ message: 'ID do tipo de manutenção inválido' });
+      }
+
+      // Verificar se o tipo existe e pertence ao usuário
+      const existingType = await maintenanceTypeModel.findById(typeId, userId);
+      if (!existingType) {
+        return res.status(404).json({ message: 'Tipo de manutenção não encontrado' });
+      }
+
+      // Verificar se é tipo padrão (pode ter proteção adicional se necessário)
+      if (existingType.is_default) {
+        return res.status(400).json({
+          message: 'Tipos de manutenção padrão não podem ser removidos'
+        });
+      }
+
+      const deleted = await maintenanceTypeModel.delete(typeId, userId);
+
+      if (!deleted) {
+        return res.status(500).json({ message: 'Erro ao deletar tipo de manutenção' });
+      }
+
+      return res.json({
+        message: 'Tipo de manutenção removido com sucesso'
+      });
+    } catch (error) {
+      console.error('Erro ao deletar tipo de manutenção:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async getStats(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      const stats = await maintenanceTypeModel.getStats(userId);
+
+      return res.json({
+        stats: {
+          total: parseInt(stats.total),
+          defaults: parseInt(stats.defaults),
+          custom: parseInt(stats.custom)
+        }
+      });
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async createDefaults(req: Request, res: Response): Promise<Response> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
+      // Verificar se já existem tipos padrão
+      const existingTypes = await maintenanceTypeModel.findAllByUserId(userId);
+      const hasDefaults = existingTypes.some(type => type.is_default);
+
+      if (hasDefaults) {
+        return res.status(400).json({
+          message: 'Tipos de manutenção padrão já foram criados'
+        });
+      }
+
+      const defaultTypes = await maintenanceTypeModel.createDefaultTypes(userId);
+
+      return res.status(201).json({
+        message: 'Tipos de manutenção padrão criados com sucesso',
+        maintenanceTypes: defaultTypes,
+        total: defaultTypes.length
+      });
+    } catch (error) {
+      console.error('Erro ao criar tipos padrão:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  }
+};
+
+export default maintenanceTypeController;
+</file>
+
+<file path="src/controllers/passwordController.ts">
+import { Request, Response } from 'express';
+import crypto from 'crypto';
+import userModel from '../models/userModel';
+import db from '../config/db';
+import { sendEmail } from '../services/emailService';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const passwordController = {
+  async forgotPassword(req: Request, res: Response): Promise<Response> {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({ message: 'Email é obrigatório' });
+      }
+
+      const user = await userModel.findByEmail(email);
+      if (!user) {
+        // Por segurança, não informamos se o email existe ou não
+        return res.status(200).json({ message: 'Se um usuário com esse email existir, enviaremos instruções de recuperação' });
+      }
+
+      // Gerar token
+      const token = crypto.randomBytes(20).toString('hex');
+      const now = new Date();
+      const expireDate = new Date(now);
+      expireDate.setHours(now.getHours() + 1); // Expira em 1 hora
+
+      // Salvar o token no banco
+      await db.query(
+        'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)',
+        [user.id, token, expireDate]
+      );
+
+      // Enviar email com o token
+      const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password/${token}`;
+
+      await sendEmail({
+        to: email,
+        subject: 'Recuperação de senha',
+        text: `Você solicitou a recuperação de senha. Use o link a seguir para definir uma nova senha: ${resetUrl}`,
+        html: `
+          <p>Você solicitou a recuperação de senha.</p>
+          <p>Use o link a seguir para definir uma nova senha:</p>
+          <a href="${resetUrl}">${resetUrl}</a>
+          <p>Se você não solicitou isso, ignore este email.</p>
+        `
+      });
+
+      return res.status(200).json({ message: 'Email de recuperação enviado' });
+    } catch (error) {
+      console.error('Erro ao solicitar recuperação de senha:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  },
+
+  async resetPassword(req: Request, res: Response): Promise<Response> {
+    try {
+      const { token, password } = req.body;
+
+      if (!token || !password) {
+        return res.status(400).json({ message: 'Token e nova senha são obrigatórios' });
+      }
+
+      // Verificar se o token existe e está válido
+      const result = await db.query(
+        'SELECT * FROM password_reset_tokens WHERE token = $1 AND expires_at > CURRENT_TIMESTAMP',
+        [token]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(400).json({ message: 'Token inválido ou expirado' });
+      }
+
+      const resetToken = result.rows[0];
+      const userId = resetToken.user_id;
+
+      // Atualizar a senha
+      await userModel.updatePasswordHash(userId, password);
+
+      // Invalidar o token usado
+      await db.query('DELETE FROM password_reset_tokens WHERE id = $1', [resetToken.id]);
+
+      return res.status(200).json({ message: 'Senha atualizada com sucesso' });
+    } catch (error) {
+      console.error('Erro ao redefinir senha:', error);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  }
+};
+
+export default passwordController;
+</file>
+
+<file path="src/index.ts">
+// backend/src/index.ts
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import authRoutes from './routes/authRoutes';
+import assetRoutes from './routes/assetRoutes';
+import maintenanceTypeRoutes from './routes/maintenanceTypeRoutes';
+import maintenanceRecordRoutes from './routes/maintenanceRecordRoutes';
+import maintenanceScheduleRoutes from './routes/maintenanceScheduleRoutes';
+import db from './config/db';
+
+dotenv.config();
+
+const app = express();
+const port = process.env.PORT || 3001;
+
+// Middlewares
+app.use(cors());
+app.use(express.json());
+
+// Rotas
+app.use('/api/auth', authRoutes);
+app.use('/api/assets', assetRoutes);
+app.use('/api/maintenance-types', maintenanceTypeRoutes);
+app.use('/api/maintenance-records', maintenanceRecordRoutes);
+app.use('/api/maintenance-schedules', maintenanceScheduleRoutes);
+
+// Rota de teste
+app.get('/', (req, res) => {
+  res.json({ message: 'API do Sistema de Manutenção de Ativos' });
+});
+
+// Rota de health check
+app.get('/health', async (req, res) => {
+  try {
+    // Testar conexão com banco
+    await db.query('SELECT NOW()');
+    res.json({
+      status: 'ok',
+      database: 'connected',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      database: 'disconnected',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Função para aguardar o banco de dados estar pronto
+async function waitForDatabase(maxRetries = 30, delay = 1000) {
+  console.log('Aguardando conexão com o banco de dados...');
+
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      await db.query('SELECT NOW()');
+      console.log('✅ Conexão com o banco de dados estabelecida!');
+      return true;
+    } catch (error) {
+      console.log(`Tentativa ${i + 1}/${maxRetries}: Banco de dados ainda não está pronto...`);
+    }
+
+    await new Promise(resolve => setTimeout(resolve, delay));
+  }
+
+  throw new Error('Não foi possível conectar ao banco de dados');
+}
+
+// Iniciar servidor apenas após o banco estar pronto
+async function startServer() {
+  try {
+    // Aguardar o banco de dados apenas se estivermos em produção ou Docker
+    if (process.env.NODE_ENV === 'production' || process.env.DB_HOST === 'postgres') {
+      await waitForDatabase();
+    }
+
+    app.listen(port, () => {
+      console.log(`🚀 Servidor rodando na porta ${port}`);
+      console.log(`📍 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`📍 Database: ${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || '5432'}`);
+      console.log(`📍 APIs disponíveis:`);
+      console.log(`   - Auth: http://localhost:${port}/api/auth`);
+      console.log(`   - Assets: http://localhost:${port}/api/assets`);
+      console.log(`   - Maintenance Types: http://localhost:${port}/api/maintenance-types`);
+      console.log(`   - Maintenance Records: http://localhost:${port}/api/maintenance-records`);
+      console.log(`   - Maintenance Schedules: http://localhost:${port}/api/maintenance-schedules`);
+    });
+  } catch (error) {
+    console.error('❌ Erro ao iniciar o servidor:', error);
+    process.exit(1);
+  }
+}
+
+// Iniciar o servidor
+startServer();
+</file>
+
+<file path="src/middlewares/authMiddleware.ts">
+import { Request, Response, NextFunction } from 'express';
+import * as jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+interface TokenPayload {
+  id: number;
+  name: string;
+  email: string;
+}
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: TokenPayload;
+    }
+  }
+}
+
+export default function authMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void | Response {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({ message: 'Token não fornecido' });
+  }
+
+  const parts = authHeader.split(' ');
+
+  if (parts.length !== 2) {
+    return res.status(401).json({ message: 'Token com formato inválido' });
+  }
+
+  const [scheme, token] = parts;
+
+  if (!/^Bearer$/i.test(scheme)) {
+    return res.status(401).json({ message: 'Token mal formatado' });
+  }
+
+  try {
+    // Usando a tipagem correta para o secret
+    const secret: jwt.Secret = process.env.JWT_SECRET || 'default_secret';
+    const decoded = jwt.verify(token, secret) as TokenPayload;
+
+    req.user = decoded;
+
+    next();
+  } catch (err) {
+    return res.status(401).json({ message: 'Token inválido' });
+  }
+}
+</file>
+
+<file path="src/models/assetModel.ts">
+// backend/src/models/assetModel.ts
+import db from '../config/db';
+
+export interface Asset {
+  id?: number;
+  user_id: number;
+  name: string;
+  description?: string;
+  location?: string;
+  status: 'active' | 'inactive' | 'maintenance';
+  created_at?: Date;
+  updated_at?: Date;
+}
+
+export interface CreateAssetData {
+  name: string;
+  description?: string;
+  location?: string;
+  status?: 'active' | 'inactive' | 'maintenance';
+}
+
+export interface UpdateAssetData {
+  name?: string;
+  description?: string;
+  location?: string;
+  status?: 'active' | 'inactive' | 'maintenance';
+}
+
+const assetModel = {
+  async findAllByUserId(userId: number): Promise<Asset[]> {
+    const result = await db.query(
+      'SELECT * FROM assets WHERE user_id = $1 ORDER BY created_at DESC',
+      [userId]
+    );
+    return result.rows;
+  },
+
+  async findById(id: number, userId: number): Promise<Asset | null> {
+    const result = await db.query(
+      'SELECT * FROM assets WHERE id = $1 AND user_id = $2',
+      [id, userId]
+    );
+    return result.rows[0] || null;
+  },
+
+  async create(userId: number, assetData: CreateAssetData): Promise<Asset> {
+    const { name, description, location, status = 'active' } = assetData;
+
+    const result = await db.query(
+      `INSERT INTO assets (user_id, name, description, location, status) 
+       VALUES ($1, $2, $3, $4, $5) 
+       RETURNING *`,
+      [userId, name, description, location, status]
+    );
+
+    return result.rows[0];
+  },
+
+  async update(id: number, userId: number, assetData: UpdateAssetData): Promise<Asset | null> {
+    const fields = [];
+    const values = [];
+    let paramCount = 1;
+
+    // Construir query dinamicamente baseado nos campos fornecidos
+    if (assetData.name !== undefined) {
+      fields.push(`name = $${paramCount}`);
+      values.push(assetData.name);
+      paramCount++;
+    }
+
+    if (assetData.description !== undefined) {
+      fields.push(`description = $${paramCount}`);
+      values.push(assetData.description);
+      paramCount++;
+    }
+
+    if (assetData.location !== undefined) {
+      fields.push(`location = $${paramCount}`);
+      values.push(assetData.location);
+      paramCount++;
+    }
+
+    if (assetData.status !== undefined) {
+      fields.push(`status = $${paramCount}`);
+      values.push(assetData.status);
+      paramCount++;
+    }
+
+    if (fields.length === 0) {
+      // Nenhum campo para atualizar
+      return await this.findById(id, userId);
+    }
+
+    // Adicionar updated_at
+    fields.push(`updated_at = CURRENT_TIMESTAMP`);
+
+    // Adicionar condições WHERE
+    values.push(id, userId);
+
+    const query = `
+      UPDATE assets 
+      SET ${fields.join(', ')} 
+      WHERE id = $${paramCount} AND user_id = $${paramCount + 1}
+      RETURNING *
+    `;
+
+    const result = await db.query(query, values);
+    return result.rows[0] || null;
+  },
+
+  async delete(id: number, userId: number): Promise<boolean> {
+    const result = await db.query(
+      'DELETE FROM assets WHERE id = $1 AND user_id = $2 RETURNING id',
+      [id, userId]
+    );
+
+    return result.rows.length > 0;
+  },
+
+  async getAssetStats(userId: number) {
+    const result = await db.query(
+      `SELECT 
+        COUNT(*) as total,
+        COUNT(CASE WHEN status = 'active' THEN 1 END) as active,
+        COUNT(CASE WHEN status = 'inactive' THEN 1 END) as inactive,
+        COUNT(CASE WHEN status = 'maintenance' THEN 1 END) as maintenance
+       FROM assets WHERE user_id = $1`,
+      [userId]
+    );
+
+    return result.rows[0];
+  }
+};
+
+export default assetModel;
+</file>
+
+<file path="src/models/maintenanceRecordModel.ts">
+// backend/src/models/maintenanceRecordModel.ts
+import db from '../config/db';
+
+export interface MaintenanceRecord {
+  id?: number;
+  asset_id: number;
+  maintenance_type_id?: number;
+  date_performed: string;
+  notes?: string;
+  cost?: number;
+  created_at?: Date;
+  updated_at?: Date;
+  // Campos extras para joins
+  asset_name?: string;
+  maintenance_type_name?: string;
+}
+
+export interface CreateMaintenanceRecordData {
+  asset_id: number;
+  maintenance_type_id?: number;
+  date_performed: string;
+  notes?: string;
+  cost?: number;
+}
+
+export interface UpdateMaintenanceRecordData {
+  maintenance_type_id?: number | null;
+  date_performed?: string;
+  notes?: string | null;
+  cost?: number | null;
+}
+
+const maintenanceRecordModel = {
+  async findAllByUserId(userId: number): Promise<MaintenanceRecord[]> {
+    const result = await db.query(
+      `SELECT 
+        mr.*,
+        a.name as asset_name,
+        mt.name as maintenance_type_name
+       FROM maintenance_records mr
+       JOIN assets a ON mr.asset_id = a.id
+       LEFT JOIN maintenance_types mt ON mr.maintenance_type_id = mt.id
+       WHERE a.user_id = $1
+       ORDER BY mr.date_performed DESC, mr.created_at DESC`,
+      [userId]
+    );
+    return result.rows;
+  },
+
+  async findByAssetId(assetId: number, userId: number): Promise<MaintenanceRecord[]> {
+    const result = await db.query(
+      `SELECT 
+        mr.*,
+        a.name as asset_name,
+        mt.name as maintenance_type_name
+       FROM maintenance_records mr
+       JOIN assets a ON mr.asset_id = a.id
+       LEFT JOIN maintenance_types mt ON mr.maintenance_type_id = mt.id
+       WHERE mr.asset_id = $1 AND a.user_id = $2
+       ORDER BY mr.date_performed DESC, mr.created_at DESC`,
+      [assetId, userId]
+    );
+    return result.rows;
+  },
+
+  async findById(id: number, userId: number): Promise<MaintenanceRecord | null> {
+    const result = await db.query(
+      `SELECT 
+        mr.*,
+        a.name as asset_name,
+        mt.name as maintenance_type_name
+       FROM maintenance_records mr
+       JOIN assets a ON mr.asset_id = a.id
+       LEFT JOIN maintenance_types mt ON mr.maintenance_type_id = mt.id
+       WHERE mr.id = $1 AND a.user_id = $2`,
+      [id, userId]
+    );
+    return result.rows[0] || null;
+  },
+
+  async create(userId: number, data: CreateMaintenanceRecordData): Promise<MaintenanceRecord> {
+    const { asset_id, maintenance_type_id, date_performed, notes, cost } = data;
+
+    // Verificar se o ativo pertence ao usuário
+    const assetCheck = await db.query(
+      'SELECT id FROM assets WHERE id = $1 AND user_id = $2',
+      [asset_id, userId]
+    );
+
+    if (assetCheck.rows.length === 0) {
+      throw new Error('Ativo não encontrado ou não pertence ao usuário');
+    }
+
+    // Verificar se o tipo de manutenção pertence ao usuário (se fornecido)
+    if (maintenance_type_id) {
+      const typeCheck = await db.query(
+        'SELECT id FROM maintenance_types WHERE id = $1 AND user_id = $2',
+        [maintenance_type_id, userId]
+      );
+
+      if (typeCheck.rows.length === 0) {
+        throw new Error('Tipo de manutenção não encontrado ou não pertence ao usuário');
+      }
+    }
+
+    const result = await db.query(
+      `INSERT INTO maintenance_records (asset_id, maintenance_type_id, date_performed, notes, cost) 
+       VALUES ($1, $2, $3, $4, $5) 
+       RETURNING *`,
+      [asset_id, maintenance_type_id, date_performed, notes, cost]
+    );
+
+    return result.rows[0];
+  },
+
+  async update(id: number, userId: number, data: UpdateMaintenanceRecordData): Promise<MaintenanceRecord | null> {
+    const fields = [];
+    const values = [];
+    let paramCount = 1;
+
+    // Verificar se o registro existe e pertence ao usuário
+    const existingRecord = await this.findById(id, userId);
+    if (!existingRecord) {
+      throw new Error('Registro de manutenção não encontrado');
+    }
+
+    // Validar tipo de manutenção se fornecido
+    if (data.maintenance_type_id !== undefined && data.maintenance_type_id !== null) {
+      const typeCheck = await db.query(
+        'SELECT id FROM maintenance_types WHERE id = $1 AND user_id = $2',
+        [data.maintenance_type_id, userId]
+      );
+
+      if (typeCheck.rows.length === 0) {
+        throw new Error('Tipo de manutenção não encontrado ou não pertence ao usuário');
+      }
+    }
+
+    // Construir query dinamicamente
+    if (data.maintenance_type_id !== undefined) {
+      fields.push(`maintenance_type_id = $${paramCount}`);
+      values.push(data.maintenance_type_id);
+      paramCount++;
+    }
+
+    if (data.date_performed !== undefined) {
+      fields.push(`date_performed = $${paramCount}`);
+      values.push(data.date_performed);
+      paramCount++;
+    }
+
+    if (data.notes !== undefined) {
+      fields.push(`notes = $${paramCount}`);
+      values.push(data.notes);
+      paramCount++;
+    }
+
+    if (data.cost !== undefined) {
+      fields.push(`cost = $${paramCount}`);
+      values.push(data.cost);
+      paramCount++;
+    }
+
+    if (fields.length === 0) {
+      return existingRecord;
+    }
+
+    // Adicionar updated_at
+    fields.push(`updated_at = CURRENT_TIMESTAMP`);
+
+    // Adicionar condição WHERE
+    values.push(id);
+
+    const query = `
+      UPDATE maintenance_records 
+      SET ${fields.join(', ')} 
+      WHERE id = $${paramCount}
+      RETURNING *
+    `;
+
+    const result = await db.query(query, values);
+    return result.rows[0] || null;
+  },
+
+  async delete(id: number, userId: number): Promise<boolean> {
+    // Verificar se o registro existe e pertence ao usuário
+    const existingRecord = await this.findById(id, userId);
+    if (!existingRecord) {
+      return false;
+    }
+
+    const result = await db.query(
+      'DELETE FROM maintenance_records WHERE id = $1 RETURNING id',
+      [id]
+    );
+
+    return result.rows.length > 0;
+  },
+
+  async getStats(userId: number) {
+    const result = await db.query(
+      `SELECT 
+        COUNT(*) as total_records,
+        COUNT(DISTINCT mr.asset_id) as assets_with_maintenance,
+        SUM(CASE WHEN mr.cost IS NOT NULL THEN mr.cost ELSE 0 END) as total_cost,
+        AVG(CASE WHEN mr.cost IS NOT NULL THEN mr.cost ELSE NULL END) as average_cost,
+        COUNT(CASE WHEN mr.date_performed >= CURRENT_DATE - INTERVAL '30 days' THEN 1 END) as last_30_days,
+        COUNT(CASE WHEN mr.date_performed >= CURRENT_DATE - INTERVAL '90 days' THEN 1 END) as last_90_days
+       FROM maintenance_records mr
+       JOIN assets a ON mr.asset_id = a.id
+       WHERE a.user_id = $1`,
+      [userId]
+    );
+
+    return result.rows[0];
+  },
+
+  async getRecentMaintenances(userId: number, limit: number = 10): Promise<MaintenanceRecord[]> {
+    const result = await db.query(
+      `SELECT 
+        mr.*,
+        a.name as asset_name,
+        mt.name as maintenance_type_name
+       FROM maintenance_records mr
+       JOIN assets a ON mr.asset_id = a.id
+       LEFT JOIN maintenance_types mt ON mr.maintenance_type_id = mt.id
+       WHERE a.user_id = $1
+       ORDER BY mr.date_performed DESC, mr.created_at DESC
+       LIMIT $2`,
+      [userId, limit]
+    );
+    return result.rows;
+  },
+
+  async getMaintenancesByDateRange(
+    userId: number,
+    startDate: string,
+    endDate: string
+  ): Promise<MaintenanceRecord[]> {
+    const result = await db.query(
+      `SELECT 
+        mr.*,
+        a.name as asset_name,
+        mt.name as maintenance_type_name
+       FROM maintenance_records mr
+       JOIN assets a ON mr.asset_id = a.id
+       LEFT JOIN maintenance_types mt ON mr.maintenance_type_id = mt.id
+       WHERE a.user_id = $1 
+       AND mr.date_performed >= $2 
+       AND mr.date_performed <= $3
+       ORDER BY mr.date_performed DESC`,
+      [userId, startDate, endDate]
+    );
+    return result.rows;
+  },
+
+  async getMaintenancesByType(userId: number, typeId: number): Promise<MaintenanceRecord[]> {
+    const result = await db.query(
+      `SELECT 
+        mr.*,
+        a.name as asset_name,
+        mt.name as maintenance_type_name
+       FROM maintenance_records mr
+       JOIN assets a ON mr.asset_id = a.id
+       LEFT JOIN maintenance_types mt ON mr.maintenance_type_id = mt.id
+       WHERE a.user_id = $1 AND mr.maintenance_type_id = $2
+       ORDER BY mr.date_performed DESC`,
+      [userId, typeId]
+    );
+    return result.rows;
+  }
+};
+
+export default maintenanceRecordModel;
+</file>
+
+<file path="src/models/maintenanceScheduleModel.ts">
+// backend/src/models/maintenanceScheduleModel.ts
+import db from '../config/db';
+
+export interface MaintenanceSchedule {
+  id?: number;
+  asset_id: number;
+  maintenance_type_id?: number;
+  based_on_record_id?: number;
+  scheduled_date: string;
+  status: 'pending' | 'completed' | 'overdue';
+  frequency_type: 'days' | 'weeks' | 'months' | 'kilometers' | 'hours';
+  frequency_value: number;
+  created_at?: Date;
+  updated_at?: Date;
+  // Campos extras para joins
+  asset_name?: string;
+  maintenance_type_name?: string;
+  last_maintenance_date?: string;
+}
+
+export interface CreateMaintenanceScheduleData {
+  asset_id: number;
+  maintenance_type_id?: number;
+  based_on_record_id?: number;
+  frequency_type: 'days' | 'weeks' | 'months' | 'kilometers' | 'hours';
+  frequency_value: number;
+  scheduled_date?: string; // Se não fornecido, será calculado automaticamente
+}
+
+export interface UpdateMaintenanceScheduleData {
+  scheduled_date?: string;
+  status?: 'pending' | 'completed' | 'overdue';
+  frequency_type?: 'days' | 'weeks' | 'months' | 'kilometers' | 'hours';
+  frequency_value?: number;
+}
+
+const maintenanceScheduleModel = {
+  // Buscar todos os agendamentos do usuário
+  async findAllByUserId(userId: number): Promise<MaintenanceSchedule[]> {
+    const result = await db.query(
+      `SELECT 
+        ms.*,
+        a.name as asset_name,
+        mt.name as maintenance_type_name,
+        mr.date_performed as last_maintenance_date
+       FROM maintenance_schedules ms
+       JOIN assets a ON ms.asset_id = a.id
+       LEFT JOIN maintenance_types mt ON ms.maintenance_type_id = mt.id
+       LEFT JOIN maintenance_records mr ON ms.based_on_record_id = mr.id
+       WHERE a.user_id = $1
+       ORDER BY ms.scheduled_date ASC, ms.created_at DESC`,
+      [userId]
+    );
+    return result.rows;
+  },
+
+  // Buscar agendamentos por ativo
+  async findByAssetId(assetId: number, userId: number): Promise<MaintenanceSchedule[]> {
+    const result = await db.query(
+      `SELECT 
+        ms.*,
+        a.name as asset_name,
+        mt.name as maintenance_type_name,
+        mr.date_performed as last_maintenance_date
+       FROM maintenance_schedules ms
+       JOIN assets a ON ms.asset_id = a.id
+       LEFT JOIN maintenance_types mt ON ms.maintenance_type_id = mt.id
+       LEFT JOIN maintenance_records mr ON ms.based_on_record_id = mr.id
+       WHERE ms.asset_id = $1 AND a.user_id = $2
+       ORDER BY ms.scheduled_date ASC`,
+      [assetId, userId]
+    );
+    return result.rows;
+  },
+
+  // Buscar agendamento específico
+  async findById(id: number, userId: number): Promise<MaintenanceSchedule | null> {
+    const result = await db.query(
+      `SELECT 
+        ms.*,
+        a.name as asset_name,
+        mt.name as maintenance_type_name,
+        mr.date_performed as last_maintenance_date
+       FROM maintenance_schedules ms
+       JOIN assets a ON ms.asset_id = a.id
+       LEFT JOIN maintenance_types mt ON ms.maintenance_type_id = mt.id
+       LEFT JOIN maintenance_records mr ON ms.based_on_record_id = mr.id
+       WHERE ms.id = $1 AND a.user_id = $2`,
+      [id, userId]
+    );
+    return result.rows[0] || null;
+  },
+
+  // Criar novo agendamento
+  async create(userId: number, data: CreateMaintenanceScheduleData): Promise<MaintenanceSchedule> {
+    const { asset_id, maintenance_type_id, based_on_record_id, frequency_type, frequency_value } = data;
+
+    // Verificar se o ativo pertence ao usuário
+    const assetCheck = await db.query(
+      'SELECT id FROM assets WHERE id = $1 AND user_id = $2',
+      [asset_id, userId]
+    );
+
+    if (assetCheck.rows.length === 0) {
+      throw new Error('Ativo não encontrado ou não pertence ao usuário');
+    }
+
+    // Calcular data agendada se não fornecida
+    let scheduled_date = data.scheduled_date;
+    if (!scheduled_date) {
+      scheduled_date = this.calculateNextMaintenanceDate(
+        based_on_record_id ? null : new Date(), // Se baseado em registro, buscaremos a data depois
+        frequency_type,
+        frequency_value
+      );
+    }
+
+    const result = await db.query(
+      `INSERT INTO maintenance_schedules 
+       (asset_id, maintenance_type_id, based_on_record_id, scheduled_date, frequency_type, frequency_value) 
+       VALUES ($1, $2, $3, $4, $5, $6) 
+       RETURNING *`,
+      [asset_id, maintenance_type_id, based_on_record_id, scheduled_date, frequency_type, frequency_value]
+    );
+
+    return result.rows[0];
+  },
+
+  // Atualizar agendamento
+  async update(id: number, userId: number, data: UpdateMaintenanceScheduleData): Promise<MaintenanceSchedule | null> {
+    const fields = [];
+    const values = [];
+    let paramCount = 1;
+
+    // Verificar se o agendamento existe e pertence ao usuário
+    const existingSchedule = await this.findById(id, userId);
+    if (!existingSchedule) {
+      throw new Error('Agendamento não encontrado');
+    }
+
+    // Construir query dinamicamente
+    if (data.scheduled_date !== undefined) {
+      fields.push(`scheduled_date = $${paramCount}`);
+      values.push(data.scheduled_date);
+      paramCount++;
+    }
+
+    if (data.status !== undefined) {
+      fields.push(`status = $${paramCount}`);
+      values.push(data.status);
+      paramCount++;
+    }
+
+    if (data.frequency_type !== undefined) {
+      fields.push(`frequency_type = $${paramCount}`);
+      values.push(data.frequency_type);
+      paramCount++;
+    }
+
+    if (data.frequency_value !== undefined) {
+      fields.push(`frequency_value = $${paramCount}`);
+      values.push(data.frequency_value);
+      paramCount++;
+    }
+
+    if (fields.length === 0) {
+      return existingSchedule;
+    }
+
+    // Adicionar updated_at
+    fields.push(`updated_at = CURRENT_TIMESTAMP`);
+
+    // Adicionar condição WHERE
+    values.push(id);
+
+    const query = `
+      UPDATE maintenance_schedules 
+      SET ${fields.join(', ')} 
+      WHERE id = $${paramCount}
+      RETURNING *
+    `;
+
+    const result = await db.query(query, values);
+    return result.rows[0] || null;
+  },
+
+  // Deletar agendamento
+  async delete(id: number, userId: number): Promise<boolean> {
+    // Verificar se o agendamento existe e pertence ao usuário
+    const existingSchedule = await this.findById(id, userId);
+    if (!existingSchedule) {
+      return false;
+    }
+
+    const result = await db.query(
+      'DELETE FROM maintenance_schedules WHERE id = $1 RETURNING id',
+      [id]
+    );
+
+    return result.rows.length > 0;
+  },
+
+  // Buscar manutenções próximas (próximos 7 dias)
+  async findUpcoming(userId: number, days: number = 7): Promise<MaintenanceSchedule[]> {
+    const result = await db.query(
+      `SELECT 
+        ms.*,
+        a.name as asset_name,
+        mt.name as maintenance_type_name,
+        mr.date_performed as last_maintenance_date
+       FROM maintenance_schedules ms
+       JOIN assets a ON ms.asset_id = a.id
+       LEFT JOIN maintenance_types mt ON ms.maintenance_type_id = mt.id
+       LEFT JOIN maintenance_records mr ON ms.based_on_record_id = mr.id
+       WHERE a.user_id = $1 
+       AND ms.status = 'pending'
+       AND ms.scheduled_date <= CURRENT_DATE + INTERVAL '${days} days'
+       AND ms.scheduled_date >= CURRENT_DATE
+       ORDER BY ms.scheduled_date ASC`,
+      [userId]
+    );
+    return result.rows;
+  },
+
+  // Buscar manutenções atrasadas
+  async findOverdue(userId: number): Promise<MaintenanceSchedule[]> {
+    const result = await db.query(
+      `SELECT 
+        ms.*,
+        a.name as asset_name,
+        mt.name as maintenance_type_name,
+        mr.date_performed as last_maintenance_date
+       FROM maintenance_schedules ms
+       JOIN assets a ON ms.asset_id = a.id
+       LEFT JOIN maintenance_types mt ON ms.maintenance_type_id = mt.id
+       LEFT JOIN maintenance_records mr ON ms.based_on_record_id = mr.id
+       WHERE a.user_id = $1 
+       AND ms.status = 'pending'
+       AND ms.scheduled_date < CURRENT_DATE
+       ORDER BY ms.scheduled_date ASC`,
+      [userId]
+    );
+    return result.rows;
+  },
+
+  // Marcar agendamento como completo e criar próximo
+  async markAsCompleted(scheduleId: number, userId: number, recordId: number): Promise<MaintenanceSchedule | null> {
+    // Buscar o agendamento atual
+    const currentSchedule = await this.findById(scheduleId, userId);
+    if (!currentSchedule) {
+      throw new Error('Agendamento não encontrado');
+    }
+
+    // Marcar como completo
+    await this.update(scheduleId, userId, { status: 'completed' });
+
+    // Criar próximo agendamento baseado na frequência
+    const nextScheduledDate = this.calculateNextMaintenanceDate(
+      new Date(), // A partir de hoje
+      currentSchedule.frequency_type,
+      currentSchedule.frequency_value
+    );
+
+    const nextSchedule = await this.create(userId, {
+      asset_id: currentSchedule.asset_id,
+      maintenance_type_id: currentSchedule.maintenance_type_id,
+      based_on_record_id: recordId,
+      frequency_type: currentSchedule.frequency_type,
+      frequency_value: currentSchedule.frequency_value,
+      scheduled_date: nextScheduledDate
+    });
+
+    return nextSchedule;
+  },
+
+  // Atualizar status de agendamentos (para detecção automática de atrasos)
+  async updateOverdueStatus(userId: number): Promise<number> {
+    const result = await db.query(
+      `UPDATE maintenance_schedules 
+       SET status = 'overdue', updated_at = CURRENT_TIMESTAMP
+       FROM assets a
+       WHERE maintenance_schedules.asset_id = a.id
+       AND a.user_id = $1
+       AND maintenance_schedules.status = 'pending'
+       AND maintenance_schedules.scheduled_date < CURRENT_DATE
+       RETURNING maintenance_schedules.id`,
+      [userId]
+    );
+
+    return result.rows.length;
+  },
+
+  // Calcular próxima data de manutenção
+  calculateNextMaintenanceDate(
+    baseDate: Date | null,
+    frequencyType: string,
+    frequencyValue: number
+  ): string {
+    const date = baseDate || new Date();
+
+    switch (frequencyType) {
+      case 'days':
+        date.setDate(date.getDate() + frequencyValue);
+        break;
+      case 'weeks':
+        date.setDate(date.getDate() + (frequencyValue * 7));
+        break;
+      case 'months':
+        date.setMonth(date.getMonth() + frequencyValue);
+        break;
+      // Para kilometers e hours, usaremos uma aproximação em dias
+      case 'kilometers':
+        // Assumindo uso médio de 50km/dia
+        const daysForKm = Math.ceil(frequencyValue / 50);
+        date.setDate(date.getDate() + daysForKm);
+        break;
+      case 'hours':
+        // Assumindo uso médio de 8h/dia
+        const daysForHours = Math.ceil(frequencyValue / 8);
+        date.setDate(date.getDate() + daysForHours);
+        break;
+      default:
+        date.setMonth(date.getMonth() + 1); // Default: 1 mês
+    }
+
+    return date.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+  },
+
+  // Estatísticas de agendamentos
+  async getStats(userId: number) {
+    const result = await db.query(
+      `SELECT 
+        COUNT(*) as total_schedules,
+        COUNT(CASE WHEN ms.status = 'pending' THEN 1 END) as pending,
+        COUNT(CASE WHEN ms.status = 'completed' THEN 1 END) as completed,
+        COUNT(CASE WHEN ms.status = 'overdue' THEN 1 END) as overdue,
+        COUNT(CASE WHEN ms.status = 'pending' AND ms.scheduled_date <= CURRENT_DATE + INTERVAL '7 days' THEN 1 END) as upcoming_week,
+        COUNT(CASE WHEN ms.status = 'pending' AND ms.scheduled_date <= CURRENT_DATE + INTERVAL '30 days' THEN 1 END) as upcoming_month
+       FROM maintenance_schedules ms
+       JOIN assets a ON ms.asset_id = a.id
+       WHERE a.user_id = $1`,
+      [userId]
+    );
+
+    return result.rows[0];
+  }
+};
+
+export default maintenanceScheduleModel;
+</file>
+
+<file path="src/models/maintenanceTypeModel.ts">
+// backend/src/models/maintenanceTypeModel.ts
+import db from '../config/db';
+
+export interface MaintenanceType {
+  id?: number;
+  user_id: number;
+  name: string;
+  description?: string;
+  is_default: boolean;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
+export interface CreateMaintenanceTypeData {
+  name: string;
+  description?: string;
+  is_default?: boolean;
+}
+
+export interface UpdateMaintenanceTypeData {
+  name?: string;
+  description?: string;
+  is_default?: boolean;
+}
+
+const maintenanceTypeModel = {
+  async findAllByUserId(userId: number): Promise<MaintenanceType[]> {
+    const result = await db.query(
+      'SELECT * FROM maintenance_types WHERE user_id = $1 ORDER BY is_default DESC, name ASC',
+      [userId]
+    );
+    return result.rows;
+  },
+
+  async findById(id: number, userId: number): Promise<MaintenanceType | null> {
+    const result = await db.query(
+      'SELECT * FROM maintenance_types WHERE id = $1 AND user_id = $2',
+      [id, userId]
+    );
+    return result.rows[0] || null;
+  },
+
+  async create(userId: number, data: CreateMaintenanceTypeData): Promise<MaintenanceType> {
+    const { name, description, is_default = false } = data;
+
+    const result = await db.query(
+      `INSERT INTO maintenance_types (user_id, name, description, is_default) 
+       VALUES ($1, $2, $3, $4) 
+       RETURNING *`,
+      [userId, name, description, is_default]
+    );
+
+    return result.rows[0];
+  },
+
+  async update(id: number, userId: number, data: UpdateMaintenanceTypeData): Promise<MaintenanceType | null> {
+    const fields = [];
+    const values = [];
+    let paramCount = 1;
+
+    // Construir query dinamicamente
+    if (data.name !== undefined) {
+      fields.push(`name = $${paramCount}`);
+      values.push(data.name);
+      paramCount++;
+    }
+
+    if (data.description !== undefined) {
+      fields.push(`description = $${paramCount}`);
+      values.push(data.description);
+      paramCount++;
+    }
+
+    if (data.is_default !== undefined) {
+      fields.push(`is_default = $${paramCount}`);
+      values.push(data.is_default);
+      paramCount++;
+    }
+
+    if (fields.length === 0) {
+      return await this.findById(id, userId);
+    }
+
+    // Adicionar updated_at
+    fields.push(`updated_at = CURRENT_TIMESTAMP`);
+
+    // Adicionar condições WHERE
+    values.push(id, userId);
+
+    const query = `
+      UPDATE maintenance_types 
+      SET ${fields.join(', ')} 
+      WHERE id = $${paramCount} AND user_id = $${paramCount + 1}
+      RETURNING *
+    `;
+
+    const result = await db.query(query, values);
+    return result.rows[0] || null;
+  },
+
+  async delete(id: number, userId: number): Promise<boolean> {
+    const result = await db.query(
+      'DELETE FROM maintenance_types WHERE id = $1 AND user_id = $2 RETURNING id',
+      [id, userId]
+    );
+
+    return result.rows.length > 0;
+  },
+
+  async getStats(userId: number) {
+    const result = await db.query(
+      `SELECT 
+        COUNT(*) as total,
+        COUNT(CASE WHEN is_default = true THEN 1 END) as defaults,
+        COUNT(CASE WHEN is_default = false THEN 1 END) as custom
+       FROM maintenance_types WHERE user_id = $1`,
+      [userId]
+    );
+
+    return result.rows[0];
+  },
+
+  async createDefaultTypes(userId: number): Promise<MaintenanceType[]> {
+    const defaultTypes = [
+      { name: 'Troca de óleo', description: 'Troca de óleo do motor e filtro', is_default: true },
+      { name: 'Revisão geral', description: 'Inspeção completa do equipamento', is_default: true },
+      { name: 'Lubrificação', description: 'Lubrificação de peças móveis', is_default: true },
+      { name: 'Limpeza', description: 'Limpeza geral e verificação visual', is_default: true },
+      { name: 'Calibração', description: 'Calibração de instrumentos e sensores', is_default: true }
+    ];
+
+    const createdTypes = [];
+
+    for (const typeData of defaultTypes) {
+      const result = await db.query(
+        `INSERT INTO maintenance_types (user_id, name, description, is_default) 
+         VALUES ($1, $2, $3, $4) 
+         RETURNING *`,
+        [userId, typeData.name, typeData.description, typeData.is_default]
+      );
+      createdTypes.push(result.rows[0]);
+    }
+
+    return createdTypes;
+  }
+};
+
+export default maintenanceTypeModel;
+</file>
+
+<file path="src/models/userModel.ts">
+// backend/src/models/userModel.ts
+import db from '../config/db';
+import bcrypt from 'bcrypt';
+
+interface User {
+  id?: number;
+  name: string;
+  email: string;
+  password?: string;
+  password_hash?: string;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
+const userModel = {
+  async findByEmail(email: string) {
+    const result = await db.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email]
+    );
+    return result.rows[0];
+  },
+
+  async findById(id: number) {
+    const result = await db.query(
+      'SELECT id, name, email, created_at, updated_at FROM users WHERE id = $1',
+      [id]
+    );
+    return result.rows[0];
+  },
+
+  async create(user: User) {
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(user.password!, salt);
+
+    const result = await db.query(
+      'INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, name, email, created_at, updated_at',
+      [user.name, user.email, password_hash]
+    );
+
+    return result.rows[0];
+  },
+
+  async validatePassword(plainPassword: string, hashedPassword: string) {
+    return await bcrypt.compare(plainPassword, hashedPassword);
+  },
+
+  async updatePasswordHash(userId: number, newPassword: string) {
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(newPassword, salt);
+
+    const result = await db.query(
+      'UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id',
+      [password_hash, userId]
+    );
+
+    return result.rows[0];
+  }
+};
+
+export default userModel;
+</file>
+
+<file path="src/routes/assetRoutes.ts">
+// backend/src/routes/assetRoutes.ts
+import { Router } from 'express';
+import assetsController from '../controllers/assetsController';
+import authMiddleware from '../middlewares/authMiddleware';
+
+const router = Router();
+
+// Aplicar middleware de autenticação em todas as rotas
+router.use(authMiddleware);
+
+// GET /api/assets - Buscar todos os ativos do usuário
+router.get('/', (req, res) => assetsController.getAll(req, res));
+
+// GET /api/assets/stats - Buscar estatísticas dos ativos
+router.get('/stats', (req, res) => assetsController.getStats(req, res));
+
+// GET /api/assets/:id - Buscar ativo específico
+router.get('/:id', (req, res) => assetsController.getById(req, res));
+
+// POST /api/assets - Criar novo ativo
+router.post('/', (req, res) => assetsController.create(req, res));
+
+// PUT /api/assets/:id - Atualizar ativo
+router.put('/:id', (req, res) => assetsController.update(req, res));
+
+// DELETE /api/assets/:id - Deletar ativo
+router.delete('/:id', (req, res) => assetsController.delete(req, res));
+
+export default router;
+</file>
+
+<file path="src/routes/authRoutes.ts">
+// backend/src/routes/authRoutes.ts
+import { Router } from 'express';
+import authController from '../controllers/authController';
+import passwordController from '../controllers/passwordController';
+import authMiddleware from '../middlewares/authMiddleware';
+
+const router = Router();
+
+// Rotas públicas
+router.post('/register', (req, res) => authController.register(req, res));
+router.post('/login', (req, res) => authController.login(req, res));
+router.post('/forgot-password', (req, res) => passwordController.forgotPassword(req, res));
+router.post('/reset-password', (req, res) => passwordController.resetPassword(req, res));
+
+// Rotas protegidas
+router.get('/profile', authMiddleware, (req, res) => authController.getProfile(req, res));
+
+export default router;
+</file>
+
+<file path="src/routes/maintenanceRecordRoutes.ts">
+// backend/src/routes/maintenanceRecordRoutes.ts
+import { Router } from 'express';
+import maintenanceRecordController from '../controllers/maintenanceRecordController';
+import authMiddleware from '../middlewares/authMiddleware';
+
+const router = Router();
+
+// Aplicar middleware de autenticação em todas as rotas
+router.use(authMiddleware);
+
+// GET /api/maintenance-records - Buscar todos os registros do usuário
+router.get('/', (req, res) => maintenanceRecordController.getAll(req, res));
+
+// GET /api/maintenance-records/stats - Buscar estatísticas dos registros
+router.get('/stats', (req, res) => maintenanceRecordController.getStats(req, res));
+
+// GET /api/maintenance-records/recent - Buscar registros recentes
+router.get('/recent', (req, res) => maintenanceRecordController.getRecent(req, res));
+
+// GET /api/maintenance-records/date-range - Buscar por período
+router.get('/date-range', (req, res) => maintenanceRecordController.getByDateRange(req, res));
+
+// GET /api/maintenance-records/asset/:assetId - Buscar registros de um ativo específico
+router.get('/asset/:assetId', (req, res) => maintenanceRecordController.getByAsset(req, res));
+
+// GET /api/maintenance-records/type/:typeId - Buscar registros por tipo de manutenção
+router.get('/type/:typeId', (req, res) => maintenanceRecordController.getByType(req, res));
+
+// GET /api/maintenance-records/:id - Buscar registro específico
+router.get('/:id', (req, res) => maintenanceRecordController.getById(req, res));
+
+// POST /api/maintenance-records - Criar novo registro
+router.post('/', (req, res) => maintenanceRecordController.create(req, res));
+
+// PUT /api/maintenance-records/:id - Atualizar registro
+router.put('/:id', (req, res) => maintenanceRecordController.update(req, res));
+
+// DELETE /api/maintenance-records/:id - Deletar registro
+router.delete('/:id', (req, res) => maintenanceRecordController.delete(req, res));
+
+export default router;
+</file>
+
+<file path="src/routes/maintenanceScheduleRoutes.ts">
+// backend/src/routes/maintenanceScheduleRoutes.ts
+import { Router } from 'express';
+import maintenanceScheduleController from '../controllers/maintenanceScheduleController';
+import authMiddleware from '../middlewares/authMiddleware';
+
+const router = Router();
+
+// Aplicar middleware de autenticação em todas as rotas
+router.use(authMiddleware);
+
+// GET /api/maintenance-schedules - Buscar todos os agendamentos do usuário
+router.get('/', (req, res) => maintenanceScheduleController.getAll(req, res));
+
+// GET /api/maintenance-schedules/stats - Buscar estatísticas dos agendamentos
+router.get('/stats', (req, res) => maintenanceScheduleController.getStats(req, res));
+
+// GET /api/maintenance-schedules/upcoming - Buscar manutenções próximas
+router.get('/upcoming', (req, res) => maintenanceScheduleController.getUpcoming(req, res));
+
+// GET /api/maintenance-schedules/overdue - Buscar manutenções atrasadas
+router.get('/overdue', (req, res) => maintenanceScheduleController.getOverdue(req, res));
+
+// GET /api/maintenance-schedules/asset/:assetId - Buscar agendamentos de um ativo específico
+router.get('/asset/:assetId', (req, res) => maintenanceScheduleController.getByAsset(req, res));
+
+// POST /api/maintenance-schedules/:id/complete - Marcar agendamento como concluído
+router.post('/:id/complete', (req, res) => maintenanceScheduleController.markCompleted(req, res));
+
+// GET /api/maintenance-schedules/:id - Buscar agendamento específico
+router.get('/:id', (req, res) => maintenanceScheduleController.getById(req, res));
+
+// POST /api/maintenance-schedules - Criar novo agendamento
+router.post('/', (req, res) => maintenanceScheduleController.create(req, res));
+
+// PUT /api/maintenance-schedules/:id - Atualizar agendamento
+router.put('/:id', (req, res) => maintenanceScheduleController.update(req, res));
+
+// DELETE /api/maintenance-schedules/:id - Deletar agendamento
+router.delete('/:id', (req, res) => maintenanceScheduleController.delete(req, res));
+
+export default router;
+</file>
+
+<file path="src/routes/maintenanceTypeRoutes.ts">
+// backend/src/routes/maintenanceTypeRoutes.ts
+import { Router } from 'express';
+import maintenanceTypeController from '../controllers/maintenanceTypeController';
+import authMiddleware from '../middlewares/authMiddleware';
+
+const router = Router();
+
+// Aplicar middleware de autenticação em todas as rotas
+router.use(authMiddleware);
+
+// GET /api/maintenance-types - Buscar todos os tipos de manutenção do usuário
+router.get('/', (req, res) => maintenanceTypeController.getAll(req, res));
+
+// GET /api/maintenance-types/stats - Buscar estatísticas dos tipos
+router.get('/stats', (req, res) => maintenanceTypeController.getStats(req, res));
+
+// POST /api/maintenance-types/create-defaults - Criar tipos padrão
+router.post('/create-defaults', (req, res) => maintenanceTypeController.createDefaults(req, res));
+
+// GET /api/maintenance-types/:id - Buscar tipo específico
+router.get('/:id', (req, res) => maintenanceTypeController.getById(req, res));
+
+// POST /api/maintenance-types - Criar novo tipo
+router.post('/', (req, res) => maintenanceTypeController.create(req, res));
+
+// PUT /api/maintenance-types/:id - Atualizar tipo
+router.put('/:id', (req, res) => maintenanceTypeController.update(req, res));
+
+// DELETE /api/maintenance-types/:id - Deletar tipo
+router.delete('/:id', (req, res) => maintenanceTypeController.delete(req, res));
+
+export default router;
+</file>
+
+<file path="src/services/emailService.ts">
+// backend/src/services/emailService.ts
+import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+interface EmailOptions {
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+}
+
+export async function sendEmail(options: EmailOptions) {
+  // Criar transportador
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: false, // true para 465, false para outras portas
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+
+  // Enviar email
+  const info = await transporter.sendMail({
+    from: `"Sistema de Manutenção" <${process.env.SMTP_USER}>`,
+    to: options.to,
+    subject: options.subject,
+    text: options.text,
+    html: options.html,
+  });
+
+  console.log('Email enviado: %s', info.messageId);
+
+  return info;
+}
+</file>
+
+<file path="tsconfig.json">
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.test.ts"
+  ]
+}
+</file>
+
+</files>

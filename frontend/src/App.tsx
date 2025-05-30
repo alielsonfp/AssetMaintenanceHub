@@ -35,6 +35,7 @@ function App() {
         bgcolor: 'background.default',
         color: 'text.primary',
         minHeight: '100vh',
+        minWidth: '100vw',
       }}
     >
       <Router>

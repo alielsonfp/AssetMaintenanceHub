@@ -7,8 +7,7 @@ import {
   Button,
   Typography,
   Link,
-  Alert,
-  Container
+  Alert
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
@@ -66,90 +65,90 @@ const Login: React.FC = () => {
   };
 
   return (
-    <Container component="main" maxWidth="sm">
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <Paper elevation={3} sx={{ padding: 4, width: '100%' }}>
-          <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <Typography component="h1" variant="h4" fontWeight="bold">
-              {t('auth.login')}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              {t('app.title')}
-            </Typography>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        width: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+        bgcolor: 'background.default',
+        p: 2
+      }}
+    >
+      <Paper elevation={3} sx={{ padding: 4, width: '100%', maxWidth: 400, mx: 'auto' }}>
+        <Box sx={{ textAlign: 'center', mb: 3 }}>
+          <Typography component="h1" variant="h4" fontWeight="bold">
+            {t('auth.login')}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            {t('app.title')}
+          </Typography>
+        </Box>
+
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        <Box component="form" onSubmit={handleSubmit}>
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            id="email"
+            label={t('auth.email')}
+            name="email"
+            autoComplete="email"
+            autoFocus
+            value={formData.email}
+            onChange={handleChange('email')}
+            disabled={loading}
+          />
+
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            name="password"
+            label={t('auth.password')}
+            type="password"
+            id="password"
+            autoComplete="current-password"
+            value={formData.password}
+            onChange={handleChange('password')}
+            disabled={loading}
+          />
+
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            sx={{ mt: 3, mb: 2 }}
+            disabled={loading}
+            size="large"
+          >
+            {loading ? t('common.loading') : t('auth.login')}
+          </Button>
+
+          <Box sx={{ textAlign: 'center', mt: 2 }}>
+            <Link component={RouterLink} to="/forgot-password" variant="body2">
+              {t('auth.forgotPassword')}
+            </Link>
           </Box>
 
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
-
-          <Box component="form" onSubmit={handleSubmit}>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="email"
-              label={t('auth.email')}
-              name="email"
-              autoComplete="email"
-              autoFocus
-              value={formData.email}
-              onChange={handleChange('email')}
-              disabled={loading}
-            />
-
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label={t('auth.password')}
-              type="password"
-              id="password"
-              autoComplete="current-password"
-              value={formData.password}
-              onChange={handleChange('password')}
-              disabled={loading}
-            />
-
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, mb: 2 }}
-              disabled={loading}
-              size="large"
-            >
-              {loading ? t('common.loading') : t('auth.login')}
-            </Button>
-
-            <Box sx={{ textAlign: 'center', mt: 2 }}>
-              <Link component={RouterLink} to="/forgot-password" variant="body2">
-                {t('auth.forgotPassword')}
+          <Box sx={{ textAlign: 'center', mt: 2 }}>
+            <Typography variant="body2">
+              {t('auth.noAccount')}{' '}
+              <Link component={RouterLink} to="/register">
+                {t('auth.register')}
               </Link>
-            </Box>
-
-            <Box sx={{ textAlign: 'center', mt: 2 }}>
-              <Typography variant="body2">
-                {t('auth.noAccount')}{' '}
-                <Link component={RouterLink} to="/register">
-                  {t('auth.register')}
-                </Link>
-              </Typography>
-            </Box>
+            </Typography>
           </Box>
-        </Paper>
-      </Box>
-    </Container>
+        </Box>
+      </Paper>
+    </Box>
   );
 };
 

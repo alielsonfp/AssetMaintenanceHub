@@ -57,16 +57,17 @@ const ForgotPassword: React.FC = () => {
 
   if (success) {
     return (
-      <Container component="main" maxWidth="sm">
-        <Box
-          sx={{
-            minHeight: '100vh',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: 'background.default',
+          p: 2
+        }}
+      >
+        <Container component="main" maxWidth="sm">
           <Paper elevation={3} sx={{ padding: 4, width: '100%' }}>
             <Box sx={{ textAlign: 'center' }}>
               <Typography component="h1" variant="h4" fontWeight="bold" sx={{ mb: 2 }}>
@@ -92,22 +93,24 @@ const ForgotPassword: React.FC = () => {
               </Button>
             </Box>
           </Paper>
-        </Box>
-      </Container>
+        </Container>
+      </Box>
     );
   }
 
+  // Return principal
   return (
-    <Container component="main" maxWidth="sm">
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        bgcolor: 'background.default',
+        p: 2
+      }}
+    >
+      <Container component="main" maxWidth="sm">
         <Paper elevation={3} sx={{ padding: 4, width: '100%' }}>
           <Box sx={{ textAlign: 'center', mb: 3 }}>
             <Typography component="h1" variant="h4" fontWeight="bold">
@@ -170,8 +173,8 @@ const ForgotPassword: React.FC = () => {
             </Box>
           </Box>
         </Paper>
-      </Box>
-    </Container>
+      </Container>
+    </Box>
   );
 };
 
